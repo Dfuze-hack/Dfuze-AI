@@ -61,14 +61,29 @@ cursor:pointer;
 </div>
 
 <script>
-function sendMessage(){
-let input=document.getElementById("message");
-let chat=document.getElementById("chat");
+async function sendMessage() {
+    const input = document.getElementById("message");
+    const chat = document.getElementById("chat");
 
-chat.innerHTML += `<p><b>You:</b> ${input.value}</p>`;
-chat.innerHTML += `<p style="color:#00aaff"><b>Dfuze AI:</b> Hello! I'm your AI assistant.</p>`;
+    const userMessage = input.value;
 
-input.value="";
+    chat.innerHTML += `<p><b>You:</b> ${userMessage}</p>`;
+
+    input.value = "";
+
+    const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            message: userMessage
+        })
+    });
+
+    const data = await response.json();
+
+    chat.innerHTML += `<p style="color:#00aaff"><b>Dfuze AI:</b> ${data.reply}</p>`;
 }
 </script>
 
