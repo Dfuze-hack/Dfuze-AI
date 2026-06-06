@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Authorization": `Bearer ${process.env.DfuzeAI}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://your-site.vercel.app",
         "X-Title": "Dfuze AI"
@@ -24,7 +24,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // 🔥 IMPORTANT FIX (prevents undefined)
     const reply =
       data?.choices?.[0]?.message?.content ||
       data?.error?.message ||
