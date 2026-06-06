@@ -6,43 +6,70 @@
 <title>Dfuze AI</title>
 
 <style>
-/* 🌈 Animated background */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: system-ui, Arial;
   height: 100vh;
-  overflow: hidden;
-  background: linear-gradient(-45deg, #0f0f0f, #111827, #0b1220, #000);
-  background-size: 400% 400%;
-  animation: bg 12s ease infinite;
+  display: flex;
+  background: #0b0f19;
   color: white;
 }
 
-@keyframes bg {
-  0% {background-position: 0% 50%;}
-  50% {background-position: 100% 50%;}
-  100% {background-position: 0% 50%;}
-}
-
-/* glass container */
-#app {
+/* 🌟 SIDEBAR */
+#sidebar {
+  width: 260px;
+  background: rgba(255,255,255,0.04);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  backdrop-filter: blur(10px);
 }
 
-/* header */
+#newChat {
+  margin: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.chatItem {
+  padding: 10px;
+  margin: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chatItem:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* 🌟 MAIN */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
 header {
-  padding: 15px;
+  padding: 12px;
   text-align: center;
   font-weight: bold;
-  letter-spacing: 2px;
-  background: rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-/* chat area */
+/* CHAT */
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -51,15 +78,13 @@ header {
   flex-direction: column;
 }
 
-/* messages */
 .msg {
-  max-width: 75%;
+  max-width: 70%;
   padding: 12px 14px;
   margin: 8px;
-  border-radius: 15px;
-  line-height: 1.4;
-  animation: pop 0.2s ease;
+  border-radius: 14px;
   white-space: pre-wrap;
+  animation: pop 0.15s ease;
 }
 
 @keyframes pop {
@@ -70,57 +95,41 @@ header {
 .user {
   align-self: flex-end;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  box-shadow: 0 0 15px rgba(37,99,235,0.3);
 }
 
 .bot {
   align-self: flex-start;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* typing indicator */
-.typing {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-left: 10px;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  50% {opacity: 0.2;}
-}
-
-/* input bar */
+/* INPUT */
 #inputBox {
   display: flex;
   padding: 12px;
-  background: rgba(255,255,255,0.05);
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
 }
 
 textarea {
   flex: 1;
-  resize: none;
   padding: 12px;
   border-radius: 10px;
   border: none;
   outline: none;
-  background: rgba(0,0,0,0.3);
+  resize: none;
+  background: rgba(0,0,0,0.4);
   color: white;
-  font-size: 14px;
 }
 
 button {
   margin-left: 10px;
-  padding: 12px 18px;
+  padding: 12px 16px;
   border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
   cursor: pointer;
-  transition: 0.2s;
 }
 
 button:hover {
@@ -131,7 +140,14 @@ button:hover {
 
 <body>
 
-<div id="app">
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <button id="newChat">+ New Chat</button>
+  <div id="chatList"></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
 
 <header>⚡ DFUZE AI</header>
 
@@ -145,29 +161,53 @@ button:hover {
 </div>
 
 <script>
+let currentChat = [];
+let chats = JSON.parse(localStorage.getItem("chats") || "[]");
+
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const chatList = document.getElementById("chatList");
 
-function addMsg(text, type) {
+function renderChats() {
+  chatList.innerHTML = "";
+  chats.forEach((c, i) => {
+    const div = document.createElement("div");
+    div.className = "chatItem";
+    div.textContent = "Chat " + (i + 1);
+    div.onclick = () => loadChat(i);
+    chatList.appendChild(div);
+  });
+}
+
+function loadChat(i) {
+  currentChat = chats[i];
+  chat.innerHTML = "";
+  currentChat.forEach(m => addMsg(m.text, m.type, false));
+}
+
+function newChat() {
+  currentChat = [];
+  chat.innerHTML = "";
+  chats.push(currentChat);
+  save();
+  renderChats();
+}
+
+function save() {
+  localStorage.setItem("chats", JSON.stringify(chats));
+}
+
+function addMsg(text, type, saveMsg = true) {
   const div = document.createElement("div");
   div.className = "msg " + type;
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-}
 
-function addTyping() {
-  const div = document.createElement("div");
-  div.className = "msg bot typing";
-  div.id = "typing";
-  div.textContent = "Dfuze AI is thinking...";
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function removeTyping() {
-  const t = document.getElementById("typing");
-  if (t) t.remove();
+  if (saveMsg) {
+    currentChat.push({ text, type });
+    save();
+  }
 }
 
 async function sendMessage() {
@@ -177,8 +217,6 @@ async function sendMessage() {
   addMsg(text, "user");
   input.value = "";
 
-  addTyping();
-
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
@@ -186,18 +224,20 @@ async function sendMessage() {
   });
 
   const data = await res.json();
-
-  removeTyping();
   addMsg(data.reply, "bot");
 }
 
-/* ENTER = send, SHIFT+ENTER = new line */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
+
+document.getElementById("newChat").onclick = newChat;
+
+renderChats();
+newChat();
 </script>
 
 </body>
