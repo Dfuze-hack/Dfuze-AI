@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: "Invalid request method" });
   }
 
-  const { message } = req.body || {};
+  const { message, history } = req.body || {};
 
   if (!message) {
     return res.status(200).json({ reply: "No message received" });
@@ -18,9 +18,13 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.DfuzeAI}`
         },
+
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
+
+          /* 🔥 IMPORTANT FIX: USE FULL CHAT HISTORY */
           messages: [
+            ...(history || []), 
             { role: "user", content: message }
           ]
         })
