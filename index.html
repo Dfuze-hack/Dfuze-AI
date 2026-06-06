@@ -34,6 +34,35 @@ header img {
   border-radius: 10px;
 }
 
+/* 🌈 RAINBOW KEYBOARD GLOW */
+#input {
+  flex: 1;
+  max-width: 650px;
+  padding: 14px;
+  border: none;
+  border-radius: 999px;
+  background: #111;
+  color: white;
+  outline: none;
+  transition: 0.3s;
+}
+
+#input.glow {
+  box-shadow: 0 0 8px #ff0000,
+              0 0 15px #ff8800,
+              0 0 25px #ffff00,
+              0 0 35px #00ff00,
+              0 0 45px #00ffff,
+              0 0 55px #0000ff,
+              0 0 65px #ff00ff;
+  animation: rainbow 2s linear infinite;
+}
+
+@keyframes rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -58,16 +87,6 @@ header img {
   padding: 12px;
   background: #1a1a1a;
   gap: 8px;
-}
-
-input {
-  flex: 1;
-  max-width: 650px;
-  padding: 14px;
-  border: none;
-  border-radius: 999px;
-  background: #111;
-  color: white;
 }
 
 button {
@@ -106,8 +125,10 @@ const input = document.getElementById("input");
 
 let messages = [];
 let voiceEnabled = true;
+let recognition;
+let isListening = false;
 
-/* ADD MESSAGE */
+/* MESSAGE */
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -116,7 +137,7 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* TEXT TO SPEECH FROM BACKEND */
+/* VOICE (ELEVENLABS BACKEND) */
 async function speak(text) {
   if (!voiceEnabled) return;
 
@@ -154,14 +175,53 @@ async function sendMessage() {
   addMsg(reply, "bot");
   messages.push({ role: "assistant", content: reply });
 
-  // 🔥 AUTO VOICE
   speak(reply);
 }
 
-/* MIC TOGGLE (simple placeholder) */
+/* 🎤 MIC (REAL SPEECH TO TEXT) */
 function toggleMic() {
-  alert("Mic feature can be upgraded to real speech recognition next 🚀");
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Mic not supported in this browser ❌");
+    return;
+  }
+
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      input.value = text;
+      sendMessage();
+    };
+  }
+
+  if (!isListening) {
+    recognition.start();
+    isListening = true;
+  } else {
+    recognition.stop();
+    isListening = false;
+  }
 }
+
+/* ⌨️ ENTER KEY + GLOW */
+input.addEventListener("input", () => {
+  if (input.value.trim().length > 0) {
+    input.classList.add("glow");
+  } else {
+    input.classList.remove("glow");
+  }
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+});
 </script>
 
 </body>
