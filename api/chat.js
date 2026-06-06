@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
 import dotenv from "dotenv";
+import fetch from "node-fetch";
 
 dotenv.config();
 
@@ -10,84 +10,74 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ============================
-   🧠 AI CHAT ENDPOINT
-============================ */
+app.get("/", (req, res) => {
+  res.json({
+    status: "Server Running"
+  });
+});
+
 app.post("/chat", async (req, res) => {
-  const { message } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: "Message is required" });
-  }
-
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:3000",
-        "X-Title": "Dfuze AI"
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are Dfuze AI. You are a helpful voice assistant. Keep responses short and natural for speech."
-          },
-          { role: "user", content: message }
-        ]
-      })
-    });
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        error: "Message is required"
+      });
+    }
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful AI assistant."
+            },
+            {
+              role: "user",
+              content: message
+            }
+          ]
+        })
+      }
+    );
 
     const data = await response.json();
 
+    if (!response.ok) {
+      console.error(data);
+
+      return res.status(response.status).json({
+        error: data.error || "API request failed"
+      });
+    }
+
     const reply =
-      data?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn't respond.";
+      data.choices?.[0]?.message?.content ||
+      "No response received.";
 
     res.json({ reply });
 
-  } catch (err) {
+  } catch (error) {
+    console.error(error);
+
     res.status(500).json({
-      error: "Server error",
-      details: err.message
+      error: "Internal Server Error",
+      details: error.message
     });
   }
 });
 
-/* ============================
-   🎤 VOICE LIST (Sol system)
-============================ */
-app.get("/voices", (req, res) => {
-  res.json({
-    voices: [
-      { id: "sol", name: "Sol 🌞" },
-      { id: "nova", name: "Nova ✨" },
-      { id: "alex", name: "Alex 🤖" }
-    ]
-  });
-});
-
-/* ============================
-   ❤️ HEALTH CHECK
-============================ */
-app.get("/", (req, res) => {
-  res.json({
-    status: "Dfuze AI Running 🚀",
-    voiceMode: true,
-    wakeWord: "Hey Dfuze",
-    endpoints: ["/chat", "/voices"]
-  });
-});
-
-/* ============================
-   🚀 START SERVER
-============================ */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Dfuze AI running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
