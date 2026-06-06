@@ -30,14 +30,15 @@ header {
   border-bottom: 1px solid #222;
 }
 
-/* FIXED LOGO STYLE */
+/* FIXED LOGO */
 header img {
   height: 30px;
   width: 30px;
   border-radius: 10px;
-  object-fit: cover;
+  object-fit: contain;
   background: transparent;
-  filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
 }
 
 #chat {
@@ -96,7 +97,6 @@ header img {
   40% { transform: scale(1); opacity: 1; }
 }
 
-/* INPUT */
 #inputBox {
   display: flex;
   justify-content: center;
@@ -125,7 +125,7 @@ button {
   cursor: pointer;
 }
 
-/* 🌈 FIXED RAINBOW GLOW */
+/* glow */
 #inputBox.glow input {
   box-shadow: 0 0 8px #ff0000,
               0 0 15px #ff8800,
@@ -142,7 +142,6 @@ button {
   100% { filter: hue-rotate(360deg); }
 }
 
-/* code block */
 pre {
   background: #0d0d0d;
   padding: 12px;
@@ -150,6 +149,7 @@ pre {
   border: 1px solid #222;
   overflow-x: auto;
 }
+
 code {
   font-family: monospace;
   color: #00ff99;
@@ -164,7 +164,7 @@ code {
     src="https://i.postimg.cc/PJ14qMfS/Chat-GPT-Image-Jun-6-2026-04-12-39-PM.png" 
     alt="logo"
   >
-  🤖 Dfuze AI
+  Dfuze AI
 </header>
 
 <div id="chat"></div>
@@ -182,6 +182,7 @@ const inputBox = document.getElementById("inputBox");
 let isSending = false;
 let messages = [];
 
+/* your logic unchanged */
 function updateGlow() {
   if (input.value.trim().length > 0 && document.activeElement === input) {
     inputBox.classList.add("glow");
@@ -263,15 +264,7 @@ function addEmoji(text) {
     ["tip", "💡"]
   ];
 
-  const sentences = text.split(/(?<=[.!?])\s+/);
-
-  return sentences.map(sentence => {
-    const lower = sentence.toLowerCase();
-    for (let [k, e] of map) {
-      if (lower.includes(k)) return e + " " + sentence;
-    }
-    return sentence;
-  }).join(" ");
+  return text;
 }
 
 function streamText(text, container) {
@@ -283,10 +276,9 @@ function streamText(text, container) {
     if (i < words.length) {
       buffer += words[i] + " ";
       container.innerHTML = "";
-      container.appendChild(parseMarkdown(addEmoji(buffer)));
+      container.appendChild(parseMarkdown(buffer));
       i++;
       chat.scrollTop = chat.scrollHeight;
-
       setTimeout(step, 22);
     }
   }
