@@ -10,9 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ============================
-// 🧠 AI CHAT ENDPOINT
-// ============================
+/* ============================
+   🧠 AI CHAT ENDPOINT
+============================ */
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
@@ -35,7 +35,7 @@ app.post("/chat", async (req, res) => {
           {
             role: "system",
             content:
-              "You are Dfuze AI. You are smart, friendly, and respond briefly unless asked for details. You support voice mode (Sol voice system)."
+              "You are Dfuze AI. You are a helpful voice assistant. Keep responses short and natural for speech."
           },
           { role: "user", content: message }
         ]
@@ -46,12 +46,11 @@ app.post("/chat", async (req, res) => {
 
     const reply =
       data?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn't generate a response.";
+      "Sorry, I couldn't respond.";
 
     res.json({ reply });
 
   } catch (err) {
-    console.error("AI ERROR:", err.message);
     res.status(500).json({
       error: "Server error",
       details: err.message
@@ -59,35 +58,34 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// ============================
-// 🎤 VOICE CONFIG ENDPOINT
-// (Frontend can fetch available voices)
-// ============================
+/* ============================
+   🎤 VOICE LIST (Sol system)
+============================ */
 app.get("/voices", (req, res) => {
   res.json({
     voices: [
-      { id: "sol", name: "Sol 🌞", style: "warm female" },
-      { id: "nova", name: "Nova ✨", style: "soft female" },
-      { id: "alex", name: "Alex 🤖", style: "male neutral" }
+      { id: "sol", name: "Sol 🌞" },
+      { id: "nova", name: "Nova ✨" },
+      { id: "alex", name: "Alex 🤖" }
     ]
   });
 });
 
-// ============================
-// ❤️ HEALTH CHECK
-// ============================
+/* ============================
+   ❤️ HEALTH CHECK
+============================ */
 app.get("/", (req, res) => {
   res.json({
-    status: "Dfuze AI Server Running 🚀",
+    status: "Dfuze AI Running 🚀",
     voiceMode: true,
-    chat: "/chat",
-    voices: "/voices"
+    wakeWord: "Hey Dfuze",
+    endpoints: ["/chat", "/voices"]
   });
 });
 
-// ============================
-// 🚀 START SERVER
-// ============================
+/* ============================
+   🚀 START SERVER
+============================ */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
