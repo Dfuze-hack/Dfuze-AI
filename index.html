@@ -82,28 +82,56 @@ header {
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* =========================
+   ✨ INPUT BAR (CHATGPT STYLE)
+========================= */
 #inputBox {
   display: flex;
-  padding: 10px;
+  justify-content: center;
+  padding: 12px;
   background: #1a1a1a;
 }
 
-input {
+/* wrapper input */
+#inputBox input {
   flex: 1;
-  padding: 12px;
+  max-width: 650px;
+  padding: 14px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   outline: none;
+  background: #111;
+  color: white;
+  font-size: 14px;
+  transition: 0.3s ease;
 }
 
-button {
+/* send button */
+#inputBox button {
   margin-left: 10px;
-  padding: 12px 16px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   background: #22c55e;
   color: white;
   cursor: pointer;
+}
+
+/* 🌈 RAINBOW GLOW (ACTIVE WHEN TYPING) */
+#inputBox.glow input {
+  box-shadow: 0 0 8px #ff0000,
+              0 0 15px #ff8800,
+              0 0 25px #ffff00,
+              0 0 35px #00ff00,
+              0 0 45px #00ffff,
+              0 0 55px #0000ff,
+              0 0 65px #ff00ff;
+  animation: rainbowGlow 2s linear infinite;
+}
+
+@keyframes rainbowGlow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
 }
 
 /* code block */
@@ -117,6 +145,18 @@ pre {
 code {
   font-family: monospace;
   color: #00ff99;
+}
+
+/* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+  #inputBox input {
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  #inputBox {
+    padding: 10px;
+  }
 }
 </style>
 </head>
@@ -135,9 +175,21 @@ code {
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const inputBox = document.getElementById("inputBox");
 
 let isSending = false;
 let messages = [];
+
+/* -------------------------
+   INPUT GLOW CONTROL
+--------------------------*/
+input.addEventListener("input", () => {
+  if (input.value.trim().length > 0) {
+    inputBox.classList.add("glow");
+  } else {
+    inputBox.classList.remove("glow");
+  }
+});
 
 /* -------------------------
    MESSAGE ADD
@@ -202,7 +254,7 @@ function parseMarkdown(text) {
 }
 
 /* -------------------------
-   🔥 FIXED EMOJI ENGINE (1 PER SENTENCE ONLY)
+   🔥 EMOJI ENGINE (UNCHANGED)
 --------------------------*/
 function addEmoji(text) {
   const map = [
@@ -222,19 +274,17 @@ function addEmoji(text) {
 
   const sentences = text.split(/(?<=[.!?])\s+/);
 
-  const processed = sentences.map(sentence => {
+  return sentences.map(sentence => {
     const lower = sentence.toLowerCase();
 
     for (let [k, e] of map) {
       if (lower.includes(k)) {
-        return e + " " + sentence; // ONLY ONE emoji per sentence
+        return e + " " + sentence;
       }
     }
 
     return sentence;
-  });
-
-  return processed.join(" ");
+  }).join(" ");
 }
 
 /* -------------------------
@@ -307,13 +357,6 @@ async function sendMessage() {
 
   isSending = false;
 }
-
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    sendMessage();
-  }
-});
 </script>
 
 </body>
