@@ -98,19 +98,19 @@ button {
   cursor: pointer;
 }
 
-/* 🎤 MIC STATES */
+/* 🎤 MIC STATES (FIXED) */
 .mic {
-  background: #38bdf8; /* ON default sky blue */
+  background: #38bdf8; /* default sky blue */
   transition: 0.3s;
-}
-
-.mic.off {
-  background: #ef4444; /* red OFF */
 }
 
 .mic.active {
   background: #38bdf8;
   box-shadow: 0 0 12px #38bdf8;
+}
+
+.mic.off {
+  background: #ef4444; /* red when off */
 }
 </style>
 </head>
@@ -126,7 +126,7 @@ button {
 
 <div id="inputBox">
   <input id="input" placeholder="Type your message..." />
-  <button class="mic off" onclick="toggleMic()">🎤</button>
+  <button class="mic" onclick="toggleMic()">🎤</button>
   <button onclick="sendMessage()">Send</button>
 </div>
 
@@ -140,7 +140,7 @@ let voiceEnabled = true;
 let recognition;
 let isListening = false;
 
-/* 🔁 LOOP MODE */
+/* LOOP MODE */
 let voiceLoop = false;
 let loopTimer;
 
