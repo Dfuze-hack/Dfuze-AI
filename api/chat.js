@@ -6,18 +6,23 @@ export default async function handler(req, res) {
   const message = req.body.message;
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.DfuzeAI}`,
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://your-site.vercel.app",
-        "X-Title": "Dfuze AI"
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instruct",
+        model: "llama3-8b-8192",
         messages: [
-          { role: "user", content: message }
+          {
+            role: "system",
+            content: "You are Dfuze AI, a helpful assistant."
+          },
+          {
+            role: "user",
+            content: message
+          }
         ]
       })
     });
