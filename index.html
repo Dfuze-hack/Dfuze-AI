@@ -98,9 +98,9 @@ button {
   cursor: pointer;
 }
 
-/* 🎤 MIC STATES (FIXED) */
+/* 🎤 MIC STATES (UNCHANGED) */
 .mic {
-  background: #38bdf8; /* default sky blue */
+  background: #38bdf8;
   transition: 0.3s;
 }
 
@@ -110,7 +110,7 @@ button {
 }
 
 .mic.off {
-  background: #ef4444; /* red when off */
+  background: #ef4444;
 }
 </style>
 </head>
@@ -140,7 +140,6 @@ let voiceEnabled = true;
 let recognition;
 let isListening = false;
 
-/* LOOP MODE */
 let voiceLoop = false;
 let loopTimer;
 
@@ -153,28 +152,39 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* VOICE */
+/* 🔥 FIXED VOICE (IMPORTANT) */
 async function speak(text) {
   if (!voiceEnabled) return;
 
-  const res = await fetch("/api/tts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+    if (!res.ok) return;
 
-  const audio = new Audio(url);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
 
-  audio.onended = () => {
-    if (voiceLoop) {
-      setTimeout(() => startMic(), 500);
-    }
-  };
+    const audio = new Audio(url);
 
-  audio.play();
+    audio.onended = () => {
+      if (voiceLoop) {
+        setTimeout(() => startMic(), 500);
+      }
+    };
+
+    audio.onerror = () => {
+      console.log("Audio failed to play");
+    };
+
+    await audio.play();
+
+  } catch (err) {
+    console.log("TTS error:", err);
+  }
 }
 
 /* CHAT */
@@ -229,7 +239,7 @@ function startMic() {
   isListening = true;
 }
 
-/* 🔁 TOGGLE MIC LOOP */
+/* TOGGLE MIC */
 function toggleMic() {
   voiceLoop = !voiceLoop;
 
@@ -246,7 +256,7 @@ function toggleMic() {
   }
 }
 
-/* ⏱ 10 MIN AUTO STOP */
+/* 10 MIN STOP */
 function resetTimeout() {
   clearTimeout(loopTimer);
 
@@ -258,7 +268,7 @@ function resetTimeout() {
   }, 10 * 60 * 1000);
 }
 
-/* ENTER KEY */
+/* ENTER */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
