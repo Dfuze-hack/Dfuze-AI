@@ -2,49 +2,28 @@
 <html>
 <head>
   <title>Dfuze AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      height: 100vh;
+      font-family: Arial;
       background: #0f0f0f;
       color: white;
+      display: flex;
+      height: 100vh;
     }
 
-    /* SIDEBAR */
     #sidebar {
-      width: 220px;
+      width: 240px;
       background: #111;
       padding: 10px;
       border-right: 1px solid #222;
     }
 
-    #newChat {
-      width: 100%;
-      padding: 10px;
-      background: #22c55e;
-      border: none;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-
-    .chatItem {
-      padding: 10px;
-      background: #1a1a1a;
-      margin-bottom: 5px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    /* MAIN */
     #main {
       flex: 1;
       display: flex;
@@ -61,20 +40,12 @@
       max-width: 70%;
       padding: 12px;
       margin: 8px;
-      border-radius: 14px;
+      border-radius: 12px;
       white-space: pre-wrap;
-      animation: pop 0.2s ease;
     }
 
-    .user {
-      background: #a855f7;
-      margin-left: auto;
-    }
-
-    .bot {
-      background: #2a2a2a;
-      margin-right: auto;
-    }
+    .user { background: #7c3aed; margin-left: auto; }
+    .bot { background: #2a2a2a; margin-right: auto; }
 
     #inputBox {
       display: flex;
@@ -86,104 +57,52 @@
     input {
       flex: 1;
       padding: 12px;
-      border-radius: 10px;
       border: none;
-      outline: none;
+      border-radius: 10px;
       background: #222;
       color: white;
     }
 
     button {
       margin-left: 8px;
-      padding: 10px 12px;
-      border: none;
+      padding: 10px;
       border-radius: 10px;
+      border: none;
       cursor: pointer;
     }
 
-    #sendBtn { background: #22c55e; color: white; }
-    #micBtn { background: #3b82f6; color: white; }
-
-    @keyframes pop {
-      from { transform: scale(0.95); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    #send { background: #22c55e; color: white; }
+    #mic { background: #3b82f6; color: white; }
   </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
 <div id="sidebar">
-  <button id="newChat">+ New Chat</button>
-  <div id="chatList"></div>
+  <h3>Dfuze AI</h3>
+  <button onclick="login()">Login</button>
 </div>
 
-<!-- MAIN -->
 <div id="main">
   <div id="chat"></div>
 
   <div id="inputBox">
-    <input id="input" placeholder="Type message..." />
-    <button id="micBtn">🎤</button>
-    <button id="sendBtn">Send</button>
+    <input id="input" placeholder="Message..." />
+    <button id="mic">🎤</button>
+    <button id="send">Send</button>
   </div>
 </div>
 
 <script>
-let chats = JSON.parse(localStorage.getItem("chats")) || [];
-let currentChat = 0;
-
-const chatBox = document.getElementById("chat");
+const chat = document.getElementById("chat");
 const input = document.getElementById("input");
-const sendBtn = document.getElementById("sendBtn");
-const micBtn = document.getElementById("micBtn");
-const chatList = document.getElementById("chatList");
 
-function save() {
-  localStorage.setItem("chats", JSON.stringify(chats));
-}
-
-function renderChats() {
-  chatList.innerHTML = "";
-  chats.forEach((c, i) => {
-    const div = document.createElement("div");
-    div.className = "chatItem";
-    div.innerText = "Chat " + (i + 1);
-    div.onclick = () => loadChat(i);
-    chatList.appendChild(div);
-  });
-}
-
-function loadChat(i) {
-  currentChat = i;
-  chatBox.innerHTML = "";
-  chats[i].messages.forEach(m => {
-    addMsg(m.text, m.role);
-  });
-}
-
-function newChat() {
-  chats.push({ messages: [] });
-  save();
-  renderChats();
-  loadChat(chats.length - 1);
-}
-
-document.getElementById("newChat").onclick = newChat;
-
-function addMsg(text, role) {
+function addMsg(text, type) {
   const div = document.createElement("div");
-  div.className = "msg " + (role === "user" ? "user" : "bot");
+  div.className = "msg " + type;
   div.innerText = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-function speak(text) {
-  const speech = new SpeechSynthesisUtterance(text);
-  speech.lang = "en-US";
-  speechSynthesis.speak(speech);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 async function send() {
@@ -191,58 +110,41 @@ async function send() {
   if (!msg) return;
 
   addMsg(msg, "user");
-  chats[currentChat].messages.push({ role: "user", text: msg });
-
   input.value = "";
 
-  // typing animation
   const typing = document.createElement("div");
   typing.className = "msg bot";
   typing.innerText = "Dfuze AI is typing...";
-  chatBox.appendChild(typing);
+  chat.appendChild(typing);
 
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message: msg
-    })
+    body: JSON.stringify({ message: msg })
   });
 
   const data = await res.json();
 
   typing.remove();
-
   addMsg(data.reply, "bot");
-  chats[currentChat].messages.push({ role: "bot", text: data.reply });
-
-  save();
-
-  speak(data.reply);
 }
 
-sendBtn.onclick = send;
-
+// ENTER KEY
 input.addEventListener("keydown", e => {
   if (e.key === "Enter") send();
 });
 
-// 🎤 voice input
-micBtn.onclick = () => {
+// MIC (NO AUTO SPEAK — FIXED)
+document.getElementById("mic").onclick = () => {
   const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   rec.lang = "en-US";
   rec.start();
-
-  rec.onresult = (event) => {
-    input.value = event.results[0][0].transcript;
+  rec.onresult = (e) => {
+    input.value = e.results[0][0].transcript;
   };
 };
 
-// init
-if (chats.length === 0) newChat();
-else loadChat(0);
-
-renderChats();
+document.getElementById("send").onclick = send;
 </script>
 
 </body>
