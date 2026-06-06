@@ -1,7 +1,3 @@
-export const config = {
-  runtime: "nodejs",
-};
-
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -15,83 +11,48 @@ export default async function handler(req, res) {
   }
 
   const { message, user } = req.body;
-  const userId = user || "guest";
 
   if (!message) {
-    return res.status(400).json({ reply: "No message received" });
+    return res.status(400).json({ error: "No message" });
   }
 
   try {
-    // 🟢 FORCE INSERT USER MESSAGE (CHECK ERROR)
-    const { error: insertError } = await supabase.from("messages").insert([
-      {
-        user_id: userId,
-        role: "user",
-        content: message,
+    /* 1. CALL GROQ AI */
+    const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.DfuzeAI}`
       },
-    ]);
+      body: JSON.stringify({
+        model: "llama3-8b-8192",
+        messages: [
+          { role: "user", content: message }
+        ]
+      })
+    });
 
-    if (insertError) {
-      console.log("❌ INSERT ERROR:", insertError);
-      return res.status(500).json({
-        reply: "DB INSERT FAILED: " + insertError.message,
-      });
-    }
+    const aiData = await aiRes.json();
+    const reply = aiData?.choices?.[0]?.message?.content || "No response";
 
-    // 🟢 GET HISTORY
-    const { data: history } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true });
-
-    const formattedMessages =
-      history && history.length > 0
-        ? history.map((m) => ({
-            role: m.role,
-            content: m.content,
-          }))
-        : [{ role: "user", content: message }];
-
-    // 🤖 CALL GROQ
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.DfuzeAI}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: formattedMessages,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    const reply =
-      data?.choices?.[0]?.message?.content ||
-      data?.error?.message ||
-      "No response";
-
-    // 🟢 SAVE AI RESPONSE
+    /* 2. SAVE TO SUPABASE */
     await supabase.from("messages").insert([
       {
-        user_id: userId,
-        role: "assistant",
-        content: reply,
+        user_id: user || "guest",
+        role: "user",
+        content: message
       },
+      {
+        user_id: user || "guest",
+        role: "assistant",
+        content: reply
+      }
     ]);
 
+    /* 3. RETURN RESPONSE */
     return res.status(200).json({ reply });
 
   } catch (err) {
-    console.log("SERVER ERROR:", err);
-
-    return res.status(500).json({
-      reply: err.message,
-    });
+    return res.status(500).json({ error: err.message });
   }
 }
