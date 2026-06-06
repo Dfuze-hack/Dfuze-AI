@@ -16,14 +16,24 @@ body {
   height: 100vh;
 }
 
+/* ✅ UPDATED HEADER STYLE */
 header {
   padding: 14px;
   background: linear-gradient(90deg, #111, #1a1a1a);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-weight: bold;
   font-size: 18px;
   letter-spacing: 1px;
   border-bottom: 1px solid #222;
+}
+
+header img {
+  height: 30px;
+  width: 30px;
+  border-radius: 8px;
 }
 
 #chat {
@@ -145,7 +155,10 @@ code {
 
 <body>
 
-<header>🤖 Dfuze AI</header>
+<header>
+  <img src="logo.png" alt="logo">
+  🤖 Dfuze AI
+</header>
 
 <div id="chat"></div>
 
@@ -162,7 +175,6 @@ const inputBox = document.getElementById("inputBox");
 let isSending = false;
 let messages = [];
 
-/* 🌈 FIX 1: PROPER GLOW CONTROL */
 function updateGlow() {
   if (input.value.trim().length > 0 && document.activeElement === input) {
     inputBox.classList.add("glow");
@@ -171,12 +183,10 @@ function updateGlow() {
   }
 }
 
-/* trigger glow correctly */
 input.addEventListener("input", updateGlow);
 input.addEventListener("focus", updateGlow);
 input.addEventListener("blur", () => inputBox.classList.remove("glow"));
 
-/* MESSAGE */
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -185,7 +195,6 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* TYPING */
 function showTyping() {
   const div = document.createElement("div");
   div.className = "msg bot typing";
@@ -205,7 +214,6 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* MARKDOWN */
 function parseMarkdown(text) {
   const container = document.createElement("div");
 
@@ -220,7 +228,7 @@ function parseMarkdown(text) {
   html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
 
   html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-  html = html.replace(/\*(.*?)\*/g, "<i>$1</i>");
+  html = html.replace(/\*(.*?)\*\*/g, "<i>$1</i>");
 
   html = html.replace(/^\d+\.\s/gm, "• ");
   html = html.replace(/^\-\s/gm, "• ");
@@ -232,7 +240,6 @@ function parseMarkdown(text) {
   return container;
 }
 
-/* EMOJI */
 function addEmoji(text) {
   const map = [
     ["weather", "🌦️"],
@@ -260,7 +267,6 @@ function addEmoji(text) {
   }).join(" ");
 }
 
-/* STREAM */
 function streamText(text, container) {
   const words = text.split(" ");
   let i = 0;
@@ -275,16 +281,12 @@ function streamText(text, container) {
       chat.scrollTop = chat.scrollHeight;
 
       setTimeout(step, 22);
-    } else {
-      /* 🌈 FIX 2: STOP GLOW AFTER RESPONSE */
-      inputBox.classList.remove("glow");
     }
   }
 
   step();
 }
 
-/* SEND */
 async function sendMessage() {
   const text = input.value.trim();
   if (!text || isSending) return;
@@ -296,7 +298,7 @@ async function sendMessage() {
   addMsg(text, "user");
   input.value = "";
 
-  inputBox.classList.remove("glow"); // FIX glow reset
+  inputBox.classList.remove("glow");
 
   showTyping();
 
@@ -332,7 +334,6 @@ async function sendMessage() {
   isSending = false;
 }
 
-/* FIXED ENTER KEY */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
