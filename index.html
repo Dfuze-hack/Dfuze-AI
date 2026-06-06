@@ -82,6 +82,7 @@ header {
   40% { transform: scale(1); opacity: 1; }
 }
 
+/* input */
 #inputBox {
   display: flex;
   padding: 10px;
@@ -139,9 +140,7 @@ const input = document.getElementById("input");
 let isSending = false;
 let messages = [];
 
-/* -------------------------
-   MESSAGE ADD
---------------------------*/
+/* MESSAGE ADD */
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -150,9 +149,7 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* -------------------------
-   TYPING
---------------------------*/
+/* TYPING */
 function showTyping() {
   const div = document.createElement("div");
   div.className = "msg bot typing";
@@ -172,9 +169,7 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* -------------------------
-   MARKDOWN ENGINE
---------------------------*/
+/* MARKDOWN */
 function parseMarkdown(text) {
   const container = document.createElement("div");
 
@@ -201,9 +196,7 @@ function parseMarkdown(text) {
   return container;
 }
 
-/* -------------------------
-   EMOJI ENGINE (UNCHANGED LOGIC)
---------------------------*/
+/* EMOJI ENGINE */
 function addEmoji(text) {
   const map = [
     ["weather", "🌦️"],
@@ -222,24 +215,18 @@ function addEmoji(text) {
 
   const sentences = text.split(/(?<=[.!?])\s+/);
 
-  const processed = sentences.map(sentence => {
+  return sentences.map(sentence => {
     const lower = sentence.toLowerCase();
 
     for (let [k, e] of map) {
-      if (lower.includes(k)) {
-        return e + " " + sentence;
-      }
+      if (lower.includes(k)) return e + " " + sentence;
     }
 
     return sentence;
-  });
-
-  return processed.join(" ");
+  }).join(" ");
 }
 
-/* -------------------------
-   STREAMING
---------------------------*/
+/* STREAM */
 function streamText(text, container) {
   const words = text.split(" ");
   let i = 0;
@@ -260,9 +247,7 @@ function streamText(text, container) {
   step();
 }
 
-/* -------------------------
-   SEND MESSAGE
---------------------------*/
+/* SEND */
 async function sendMessage() {
   const text = input.value.trim();
   if (!text || isSending) return;
@@ -308,8 +293,8 @@ async function sendMessage() {
   isSending = false;
 }
 
-/* ✅ FIXED ENTER KEY (this was the issue) */
-input.addEventListener("keydown", function (e) {
+/* ✅ FIXED ENTER KEY (ONLY CHANGE) */
+input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     sendMessage();
