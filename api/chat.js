@@ -5,6 +5,10 @@ export default async function handler(req, res) {
 
   const message = req.body.message;
 
+  if (!message) {
+    return res.status(400).json({ reply: "No message provided" });
+  }
+
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -13,22 +17,24 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192",
+        model: "llama-3.1-8b-instant",
         messages: [
           {
             role: "system",
-            content: "You are Dfuze AI, a helpful assistant."
+            content: "You are Dfuze AI, a helpful, friendly assistant."
           },
           {
             role: "user",
             content: message
           }
-        ]
+        ],
+        temperature: 0.7
       })
     });
 
     const data = await response.json();
 
+    // ✅ safe response handling (prevents undefined)
     const reply =
       data?.choices?.[0]?.message?.content ||
       data?.error?.message ||
