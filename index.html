@@ -5,9 +5,9 @@
 
   <style>
     body {
-      font-family: Arial;
       background: #0f0f0f;
       color: white;
+      font-family: Arial;
       text-align: center;
       margin: 0;
     }
@@ -18,19 +18,15 @@
       width: 70%;
       height: 420px;
       margin: 20px auto;
-      border: 1px solid #333;
-      padding: 10px;
-      overflow-y: auto;
       background: #111;
       border-radius: 10px;
+      padding: 10px;
+      overflow-y: auto;
+      border: 1px solid #333;
     }
 
-    .user { color: #4fc3f7; margin: 5px 0; }
-    .ai { color: #a5d6a7; margin: 5px 0; }
-
-    .controls {
-      margin-top: 10px;
-    }
+    .user { color: #4fc3f7; }
+    .ai { color: #a5d6a7; }
 
     input {
       width: 50%;
@@ -41,65 +37,64 @@
 
     button {
       padding: 10px 12px;
-      margin: 5px;
+      border: none;
       cursor: pointer;
       border-radius: 6px;
-      border: none;
     }
 
-    .mic {
-      background: #ff5252;
-      color: white;
+    /* 🔥 NEON MIC */
+    #micBtn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-top: 10px;
+
+      font-size: 30px;
+      background: #111;
+      color: #00fff7;
+
+      box-shadow: 0 0 10px #00fff7, 0 0 30px #00fff7;
+      transition: 0.3s;
     }
 
-    .send {
-      background: #4caf50;
-      color: white;
+    #micBtn.listening {
+      background: #00fff7;
+      color: black;
+      box-shadow: 0 0 30px #00fff7, 0 0 80px #00fff7;
+      transform: scale(1.15);
     }
 
-    select {
-      padding: 8px;
-      border-radius: 6px;
-    }
-
-    .listening {
+    #status {
+      margin-top: 10px;
       color: #ff5252;
-      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
 
-<h1>🤖 Dfuze AI Voice Mode</h1>
+<h1>🤖 Dfuze AI Voice Assistant</h1>
 
 <div id="chat"></div>
 
-<div class="controls">
-  <input id="inputBox" placeholder="Type or speak..." />
+<input id="inputBox" placeholder="Type or say something..." />
+<button onclick="sendMessage()">Send</button>
 
-  <button class="send" onclick="sendMessage()">Send</button>
-  <button class="mic" onclick="startVoice()">🎤 Speak</button>
+<br>
 
-  <br><br>
-
-  🎧 Voice:
-  <select id="voiceSelect">
-    <option value="sol">Sol 🌞</option>
-    <option value="nova">Nova ✨</option>
-    <option value="alex">Alex 🤖</option>
-  </select>
-
-  <div id="status"></div>
-</div>
+<button id="micBtn" onclick="toggleVoice()">🎤</button>
+<div id="status"></div>
 
 <script>
 const chatBox = document.getElementById("chat");
 const status = document.getElementById("status");
+const micBtn = document.getElementById("micBtn");
 
-// =========================
-// 💬 SEND MESSAGE
-// =========================
+let isActive = false;
+
+/* ============================
+   💬 SEND MESSAGE
+============================ */
 async function sendMessage(textFromVoice = null) {
   const input = document.getElementById("inputBox");
   const message = textFromVoice || input.value;
@@ -116,69 +111,86 @@ async function sendMessage(textFromVoice = null) {
   });
 
   const data = await res.json();
-  const reply = data.reply;
 
-  chatBox.innerHTML += `<div class="ai">🤖 Dfuze: ${reply}</div>`;
+  chatBox.innerHTML += `<div class="ai">🤖 Dfuze: ${data.reply}</div>`;
 
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  speak(reply);
+  speak(data.reply);
 }
 
-// =========================
-// 🎤 VOICE INPUT (SPEECH TO TEXT)
-// =========================
+/* ============================
+   🎤 VOICE (WAKE WORD SYSTEM)
+============================ */
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const recognition = new SpeechRecognition();
+
+recognition.continuous = true;
 recognition.lang = "en-IN";
 recognition.interimResults = false;
 
-function startVoice() {
-  recognition.start();
-  status.innerHTML = "🎤 Listening...";
-  status.className = "listening";
+function toggleVoice() {
+  if (!isActive) {
+    recognition.start();
+    status.innerText = "🎤 Say 'Hey Dfuze' to activate";
+  } else {
+    recognition.stop();
+    status.innerText = "";
+  }
 }
 
+/* ============================
+   🧠 WAKE WORD LOGIC
+============================ */
 recognition.onresult = (event) => {
-  const text = event.results[0][0].transcript;
+  const text = event.results[event.results.length - 1][0].transcript.toLowerCase();
 
-  status.innerHTML = "";
-  status.className = "";
+  console.log("Heard:", text);
 
-  sendMessage(text);
+  // WAKE WORD
+  if (text.includes("hey dfuze")) {
+    isActive = true;
+    micBtn.classList.add("listening");
+
+    speak("Yes? I'm listening.");
+    status.innerText = "🟢 Listening...";
+    return;
+  }
+
+  // AFTER ACTIVATION
+  if (isActive) {
+    sendMessage(text);
+  }
 };
 
+/* ============================
+   🔁 AUTO RESTART LISTENER
+============================ */
 recognition.onend = () => {
-  status.innerHTML = "";
+  if (!isActive) {
+    setTimeout(() => recognition.start(), 500);
+  }
 };
 
-// =========================
-// 🔊 VOICE OUTPUT (SOL SYSTEM)
-// =========================
+/* ============================
+   🔊 SOL VOICE OUTPUT
+============================ */
 function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
 
   const voices = speechSynthesis.getVoices();
-  const selectedMode = document.getElementById("voiceSelect").value;
 
-  const voiceMap = {
-    sol: "Google UK English Female",
-    nova: "Google US English Female",
-    alex: "Google US English Male"
-  };
-
-  const matchVoice = voices.find(v =>
-    v.name.toLowerCase().includes((voiceMap[selectedMode] || "").toLowerCase())
+  const solVoice = voices.find(v =>
+    v.name.toLowerCase().includes("google") ||
+    v.name.toLowerCase().includes("female")
   );
 
-  if (matchVoice) {
-    utterance.voice = matchVoice;
-  }
+  if (solVoice) utterance.voice = solVoice;
 
   utterance.rate = 1;
-  utterance.pitch = selectedMode === "sol" ? 1.1 : 1;
+  utterance.pitch = 1.2;
 
   speechSynthesis.speak(utterance);
 }
