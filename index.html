@@ -4,13 +4,10 @@
   <title>Dfuze AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
-
   <style>
     body {
       margin: 0;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       background: #0f0f0f;
       color: white;
       display: flex;
@@ -18,7 +15,7 @@
     }
 
     #sidebar {
-      width: 240px;
+      width: 220px;
       background: #111;
       padding: 10px;
       border-right: 1px solid #222;
@@ -42,10 +39,18 @@
       margin: 8px;
       border-radius: 12px;
       white-space: pre-wrap;
+      animation: pop 0.2s ease;
     }
 
-    .user { background: #7c3aed; margin-left: auto; }
-    .bot { background: #2a2a2a; margin-right: auto; }
+    .user {
+      background: #7c3aed;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: #2a2a2a;
+      margin-right: auto;
+    }
 
     #inputBox {
       display: flex;
@@ -59,6 +64,7 @@
       padding: 12px;
       border: none;
       border-radius: 10px;
+      outline: none;
       background: #222;
       color: white;
     }
@@ -66,13 +72,18 @@
     button {
       margin-left: 8px;
       padding: 10px;
-      border-radius: 10px;
       border: none;
+      border-radius: 10px;
       cursor: pointer;
     }
 
-    #send { background: #22c55e; color: white; }
-    #mic { background: #3b82f6; color: white; }
+    #sendBtn { background: #22c55e; color: white; }
+    #micBtn { background: #3b82f6; color: white; }
+
+    @keyframes pop {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 
@@ -80,22 +91,25 @@
 
 <div id="sidebar">
   <h3>Dfuze AI</h3>
-  <button onclick="login()">Login</button>
 </div>
 
 <div id="main">
   <div id="chat"></div>
 
   <div id="inputBox">
-    <input id="input" placeholder="Message..." />
-    <button id="mic">🎤</button>
-    <button id="send">Send</button>
+    <input id="input" placeholder="Type message..." />
+    <button id="micBtn">🎤</button>
+    <button id="sendBtn">Send</button>
   </div>
 </div>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const micBtn = document.getElementById("micBtn");
+
+const userId = "guest"; // (later upgrade to login)
 
 function addMsg(text, type) {
   const div = document.createElement("div");
@@ -105,6 +119,28 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+// 🧠 LOAD HISTORY ON PAGE OPEN
+async function loadHistory() {
+  try {
+    const res = await fetch(`/api/history?user=${userId}`);
+    const data = await res.json();
+
+    chat.innerHTML = "";
+
+    if (data.messages && data.messages.length > 0) {
+      data.messages.forEach(m => {
+        addMsg(
+          m.content,
+          m.role === "user" ? "user" : "bot"
+        );
+      });
+    }
+  } catch (err) {
+    console.log("History load error:", err);
+  }
+}
+
+// 💬 SEND MESSAGE
 async function send() {
   const msg = input.value.trim();
   if (!msg) return;
@@ -112,39 +148,54 @@ async function send() {
   addMsg(msg, "user");
   input.value = "";
 
+  // typing animation
   const typing = document.createElement("div");
   typing.className = "msg bot";
   typing.innerText = "Dfuze AI is typing...";
   chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
 
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: msg })
-  });
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: msg,
+        user: userId
+      })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  typing.remove();
-  addMsg(data.reply, "bot");
+    typing.remove();
+    addMsg(data.reply, "bot");
+
+  } catch (err) {
+    typing.remove();
+    addMsg("Error connecting to AI 😢", "bot");
+  }
 }
 
-// ENTER KEY
+// ⌨️ ENTER KEY SUPPORT
 input.addEventListener("keydown", e => {
   if (e.key === "Enter") send();
 });
 
-// MIC (NO AUTO SPEAK — FIXED)
-document.getElementById("mic").onclick = () => {
+sendBtn.onclick = send;
+
+// 🎤 VOICE INPUT (NO AUTO SPEAK)
+micBtn.onclick = () => {
   const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   rec.lang = "en-US";
   rec.start();
+
   rec.onresult = (e) => {
     input.value = e.results[0][0].transcript;
   };
 };
 
-document.getElementById("send").onclick = send;
+// 🚀 INIT
+loadHistory();
 </script>
 
 </body>
