@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="manifest" href="manifest.json">
+<head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
 <title>Dfuze AI</title>
 
-<!-- 🌐 PWA STEP 2: MANIFEST -->
-<link rel="manifest" href="/manifest.json">
+<!-- 🌐 PWA MANIFEST -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f0f0f">
+
+<!-- ICONS -->
+<link rel="icon" href="logo192.png">
+<link rel="apple-touch-icon" href="logo512.png">
 
 <style>
 body {
@@ -35,36 +40,7 @@ header {
 header img {
   height: 30px;
   width: 30px;
-  border-radius: 10px;
-}
-
-/* 🌈 RAINBOW KEYBOARD GLOW */
-#input {
-  flex: 1;
-  max-width: 650px;
-  padding: 14px;
-  border: none;
-  border-radius: 999px;
-  background: #111;
-  color: white;
-  outline: none;
-  transition: 0.3s;
-}
-
-#input.glow {
-  box-shadow: 0 0 8px #ff0000,
-              0 0 15px #ff8800,
-              0 0 25px #ffff00,
-              0 0 35px #00ff00,
-              0 0 45px #00ffff,
-              0 0 55px #0000ff,
-              0 0 65px #ff00ff;
-  animation: rainbow 2s linear infinite;
-}
-
-@keyframes rainbow {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
+  border-radius: 8px;
 }
 
 #chat {
@@ -93,6 +69,33 @@ header img {
   gap: 8px;
 }
 
+#input {
+  flex: 1;
+  max-width: 650px;
+  padding: 14px;
+  border: none;
+  border-radius: 999px;
+  background: #111;
+  color: white;
+  outline: none;
+}
+
+#input.glow {
+  box-shadow: 0 0 8px #ff0000,
+              0 0 15px #ff8800,
+              0 0 25px #ffff00,
+              0 0 35px #00ff00,
+              0 0 45px #00ffff,
+              0 0 55px #0000ff,
+              0 0 65px #ff00ff;
+  animation: rainbow 2s linear infinite;
+}
+
+@keyframes rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
 button {
   padding: 12px 14px;
   border: none;
@@ -102,27 +105,16 @@ button {
   cursor: pointer;
 }
 
-/* 🎤 MIC STATES (UNCHANGED) */
-.mic {
-  background: #38bdf8;
-  transition: 0.3s;
-}
-
-.mic.active {
-  background: #38bdf8;
-  box-shadow: 0 0 12px #38bdf8;
-}
-
-.mic.off {
-  background: #ef4444;
-}
+.mic { background: #38bdf8; }
+.mic.active { box-shadow: 0 0 12px #38bdf8; }
+.mic.off { background: #ef4444; }
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="https://i.postimg.cc/PJ14qMfS/Chat-GPT-Image-Jun-6-2026-04-12-39-PM.png">
+  <img src="logo192.png">
   Dfuze AI
 </header>
 
@@ -140,10 +132,7 @@ const input = document.getElementById("input");
 const micBtn = document.querySelector(".mic");
 
 let messages = [];
-let voiceEnabled = true;
 let recognition;
-let isListening = false;
-
 let voiceLoop = false;
 let loopTimer;
 
@@ -156,41 +145,6 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* 🔥 FIXED VOICE (IMPORTANT) */
-async function speak(text) {
-  if (!voiceEnabled) return;
-
-  try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-
-    if (!res.ok) return;
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-
-    const audio = new Audio(url);
-
-    audio.onended = () => {
-      if (voiceLoop) {
-        setTimeout(() => startMic(), 500);
-      }
-    };
-
-    audio.onerror = () => {
-      console.log("Audio failed to play");
-    };
-
-    await audio.play();
-
-  } catch (err) {
-    console.log("TTS error:", err);
-  }
-}
-
 /* CHAT */
 async function sendMessage(textOverride = null) {
   const text = textOverride || input.value.trim();
@@ -199,8 +153,6 @@ async function sendMessage(textOverride = null) {
   addMsg(text, "user");
   messages.push({ role: "user", content: text });
   input.value = "";
-
-  resetTimeout();
 
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -217,7 +169,25 @@ async function sendMessage(textOverride = null) {
   speak(reply);
 }
 
-/* 🎤 MIC */
+/* TTS */
+async function speak(text) {
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+  } catch (e) {
+    console.log("TTS error", e);
+  }
+}
+
+/* MIC */
 function startMic() {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -234,62 +204,45 @@ function startMic() {
     };
 
     recognition.onend = () => {
-      isListening = false;
       if (voiceLoop) setTimeout(startMic, 700);
     };
   }
 
   recognition.start();
-  isListening = true;
 }
 
-/* TOGGLE MIC */
 function toggleMic() {
   voiceLoop = !voiceLoop;
 
   if (voiceLoop) {
-    micBtn.classList.remove("off");
     micBtn.classList.add("active");
+    micBtn.classList.remove("off");
     startMic();
-    resetTimeout();
   } else {
-    micBtn.classList.remove("active");
     micBtn.classList.add("off");
+    micBtn.classList.remove("active");
     if (recognition) recognition.stop();
     clearTimeout(loopTimer);
   }
 }
 
-/* 10 MIN STOP */
-function resetTimeout() {
-  clearTimeout(loopTimer);
-
-  loopTimer = setTimeout(() => {
-    voiceLoop = false;
-    micBtn.classList.remove("active");
-    micBtn.classList.add("off");
-    if (recognition) recognition.stop();
-  }, 10 * 60 * 1000);
-}
-
-/* ENTER */
+/* ENTER KEY */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
 /* GLOW */
 input.addEventListener("input", () => {
-  if (input.value.trim().length > 0) input.classList.add("glow");
-  else input.classList.remove("glow");
+  input.classList.toggle("glow", input.value.trim().length > 0);
 });
 </script>
 
-<!-- 🌐 PWA STEP 4: SERVICE WORKER REGISTER -->
+<!-- SERVICE WORKER -->
 <script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js")
-    .then(() => console.log("Service Worker Registered"))
-    .catch((err) => console.log("SW error:", err));
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("SW Registered"))
+    .catch(console.error);
 }
 </script>
 
