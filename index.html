@@ -63,13 +63,11 @@ header {
   font-style: italic;
 }
 
-/* dots container */
 .dots {
   display: flex;
   gap: 4px;
 }
 
-/* dots */
 .dots span {
   width: 6px;
   height: 6px;
@@ -87,7 +85,6 @@ header {
   animation-delay: 0.4s;
 }
 
-/* animation */
 @keyframes bounce {
   0%, 80%, 100% {
     transform: scale(0.3);
@@ -154,7 +151,7 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ✨ UPDATED SHOW TYPING */
+/* ✨ SHOW TYPING */
 function showTyping() {
   const div = document.createElement("div");
   div.className = "msg bot typing";
@@ -176,7 +173,28 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* ⚡ FAST STREAMING FIX */
+/* ⚡ FIX: FORMAT AI TEXT (NEW ADDITION) */
+function formatAIText(text) {
+  return text
+    // big headings (**text**)
+    .replace(/\*\*(.*?)\*\*/g, "<b style='font-size:16px; display:block; margin:6px 0;'>$1</b>")
+
+    // small bold (*text*)
+    .replace(/\*(.*?)\*/g, "<b>$1</b>")
+
+    // emoji enhancement for keywords
+    .replace(/(^|\s)(note|important|warning|tip)/gi, (m) => {
+      const map = {
+        note: "📝 Note",
+        important: "⚡ Important",
+        warning: "⚠️ Warning",
+        tip: "💡 Tip"
+      };
+      return map[m.toLowerCase().trim()] || m;
+    });
+}
+
+/* ⚡ FAST STREAMING (UPDATED ONLY FORMAT PART) */
 function streamText(text, container) {
   const words = text.split(" ");
   let i = 0;
@@ -187,7 +205,7 @@ function streamText(text, container) {
     if (i < words.length) {
       const chunk = words.slice(i, i + chunkSize).join(" ");
 
-      container.textContent += (i === 0 ? "" : " ") + chunk;
+      container.innerHTML += (i === 0 ? "" : " ") + formatAIText(chunk);
 
       i += chunkSize;
 
