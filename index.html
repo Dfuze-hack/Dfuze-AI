@@ -1,87 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>AI Chat</title>
-
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0f0f0f;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-
-  #chat {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-  }
-
-  .msg {
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 70%;
-    white-space: pre-wrap;
-  }
-
-  .user {
-    background: #2b7cff;
-    align-self: flex-end;
-    margin-left: auto;
-  }
-
-  .bot {
-    background: #333;
-    align-self: flex-start;
-    margin-right: auto;
-  }
-
-  #inputBox {
-    display: flex;
-    padding: 10px;
-    background: #1a1a1a;
-  }
-
-  #input {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    outline: none;
-    border-radius: 6px;
-  }
-
-  button {
-    margin-left: 10px;
-    padding: 10px 15px;
-    border: none;
-    background: #2b7cff;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-</style>
-</head>
-
-<body>
-
-<div id="chat"></div>
-
-<div id="inputBox">
-  <input id="input" placeholder="Type something..." />
-  <button onclick="sendMsg()">Send</button>
-</div>
-
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
-/* 🧠 MEMORY ONLY WHILE PAGE IS OPEN */
-let messages = []; // <- THIS is your chat memory
+let messages = []; // session-only memory
 
 function addMsg(text, type) {
   const div = document.createElement("div");
@@ -92,7 +13,7 @@ function addMsg(text, type) {
   return div;
 }
 
-/* ✨ Word-by-word bot effect */
+/* ✨ Word-by-word typing */
 function typeBotMessage(text) {
   const div = document.createElement("div");
   div.className = "msg bot";
@@ -106,23 +27,32 @@ function typeBotMessage(text) {
       div.textContent += (i === 0 ? "" : " ") + words[i];
       i++;
       chat.scrollTop = chat.scrollHeight;
-      setTimeout(typeWord, 120);
+      setTimeout(typeWord, 100);
     }
   }
 
   typeWord();
 }
 
-/* 🤖 Fake AI reply (replace with API later) */
+/* 🤖 REAL bot logic (replace later with API if you want) */
 function getBotReply(userText) {
-  return "You said: " + userText;
+  const text = userText.toLowerCase();
+
+  if (text.includes("hi") || text.includes("hello")) {
+    return "Hey! 👋 How can I help you today?";
+  }
+
+  if (text.includes("how are you")) {
+    return "I'm doing great 😄 What about you?";
+  }
+
+  return "I don't fully understand that yet 🤔 but I'm learning!";
 }
 
 function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  // store in memory
   messages.push({ role: "user", text });
 
   addMsg(text, "user");
@@ -130,16 +60,15 @@ function sendMsg() {
 
   const reply = getBotReply(text);
 
-  // store bot message too
   messages.push({ role: "bot", text: reply });
 
   typeBotMessage(reply);
 }
 
-/* ⛔ IMPORTANT:
-No localStorage, no sessionStorage = refresh = full reset automatically
-*/
+/* ✅ ENTER KEY SUPPORT */
+input.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    sendMsg();
+  }
+});
 </script>
-
-</body>
-</html>
