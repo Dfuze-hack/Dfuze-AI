@@ -5,10 +5,6 @@ export default async function handler(req, res) {
 
   const { message, history } = req.body || {};
 
-  if (!message) {
-    return res.status(200).json({ reply: "No message received" });
-  }
-
   try {
     const aiRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -18,30 +14,23 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.DfuzeAI}`
         },
-
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-
-          /* 🔥 IMPORTANT FIX: USE FULL CHAT HISTORY */
           messages: [
-            ...(history || []), 
+            ...(history || []),
             { role: "user", content: message }
           ]
         })
       }
     );
 
-    const aiData = await aiRes.json();
+    const data = await aiRes.json();
 
-    const reply =
-      aiData?.choices?.[0]?.message?.content ||
-      "No response from AI";
-
-    return res.status(200).json({ reply });
+    res.status(200).json({
+      reply: data?.choices?.[0]?.message?.content || "No response"
+    });
 
   } catch (err) {
-    return res.status(200).json({
-      reply: "Error: " + err.message
-    });
+    res.status(200).json({ reply: "Error: " + err.message });
   }
 }
