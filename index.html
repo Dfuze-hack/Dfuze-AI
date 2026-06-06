@@ -1,91 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dfuze AI</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dfuze AI</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+<style>
+/* 🌈 Animated background */
+body {
+  margin: 0;
+  font-family: system-ui, Arial;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(-45deg, #0f0f0f, #111827, #0b1220, #000);
+  background-size: 400% 400%;
+  animation: bg 12s ease infinite;
+  color: white;
+}
 
-    header {
-      padding: 12px;
-      background: #111;
-      text-align: center;
-      font-weight: bold;
-    }
+@keyframes bg {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
 
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
+/* glass container */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  backdrop-filter: blur(10px);
+}
 
-    .msg {
-      padding: 10px;
-      margin: 8px;
-      border-radius: 10px;
-      max-width: 70%;
-      white-space: pre-wrap;
-    }
+/* header */
+header {
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 2px;
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
 
-    .user {
-      background: #2563eb;
-      margin-left: auto;
-    }
+/* chat area */
+#chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
 
-    .bot {
-      background: #333;
-      margin-right: auto;
-    }
+/* messages */
+.msg {
+  max-width: 75%;
+  padding: 12px 14px;
+  margin: 8px;
+  border-radius: 15px;
+  line-height: 1.4;
+  animation: pop 0.2s ease;
+  white-space: pre-wrap;
+}
 
-    #inputBox {
-      display: flex;
-      padding: 10px;
-      background: #1a1a1a;
-    }
+@keyframes pop {
+  from {transform: scale(0.95); opacity: 0;}
+  to {transform: scale(1); opacity: 1;}
+}
 
-    input {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      outline: none;
-    }
+.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 0 15px rgba(37,99,235,0.3);
+}
 
-    button {
-      margin-left: 10px;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      background: #22c55e;
-      color: white;
-      cursor: pointer;
-    }
+.bot {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+}
 
-    button:disabled {
-      background: gray;
-    }
-  </style>
+/* typing indicator */
+.typing {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 10px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {opacity: 0.2;}
+}
+
+/* input bar */
+#inputBox {
+  display: flex;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+textarea {
+  flex: 1;
+  resize: none;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: rgba(0,0,0,0.3);
+  color: white;
+  font-size: 14px;
+}
+
+button {
+  margin-left: 10px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+</style>
 </head>
 
 <body>
 
-<header>🤖 Dfuze AI</header>
+<div id="app">
+
+<header>⚡ DFUZE AI</header>
 
 <div id="chat"></div>
 
 <div id="inputBox">
-  <input id="input" placeholder="Type your message..." />
+  <textarea id="input" rows="1" placeholder="Ask something..."></textarea>
   <button onclick="sendMessage()">Send</button>
+</div>
+
 </div>
 
 <script>
@@ -100,6 +156,20 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+function addTyping() {
+  const div = document.createElement("div");
+  div.className = "msg bot typing";
+  div.id = "typing";
+  div.textContent = "Dfuze AI is thinking...";
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById("typing");
+  if (t) t.remove();
+}
+
 async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
@@ -107,37 +177,27 @@ async function sendMessage() {
   addMsg(text, "user");
   input.value = "";
 
+  addTyping();
+
   const res = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ message: text, user: "guest" })
   });
 
   const data = await res.json();
+
+  removeTyping();
   addMsg(data.reply, "bot");
 }
 
-// 🔥 ENTER KEY FIX
+/* ENTER = send, SHIFT+ENTER = new line */
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
-
-// OPTIONAL: load history (if you created history API)
-window.onload = async () => {
-  try {
-    const res = await fetch("/api/history?user=guest");
-    const data = await res.json();
-
-    (data.messages || []).forEach(m => {
-      addMsg(m.content, m.role === "user" ? "user" : "bot");
-    });
-  } catch (e) {
-    console.log("No history loaded");
-  }
-};
 </script>
 
 </body>
