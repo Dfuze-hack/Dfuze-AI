@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dfuze AI</title>
 
+<!-- 🌐 PWA STEP 2: MANIFEST -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f0f0f">
+
 <style>
 body {
   margin: 0;
@@ -278,6 +282,15 @@ input.addEventListener("input", () => {
   if (input.value.trim().length > 0) input.classList.add("glow");
   else input.classList.remove("glow");
 });
+</script>
+
+<!-- 🌐 PWA STEP 4: SERVICE WORKER REGISTER -->
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("Service Worker Registered"))
+    .catch((err) => console.log("SW error:", err));
+}
 </script>
 
 </body>
