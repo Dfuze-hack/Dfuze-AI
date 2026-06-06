@@ -77,18 +77,9 @@ header {
   animation: bounce 1.2s infinite ease-in-out;
 }
 
-.dots span:nth-child(2) { animation-delay: 0.2s; }
-.dots span:nth-child(3) { animation-delay: 0.4s; }
-
 @keyframes bounce {
-  0%, 80%, 100% {
-    transform: scale(0.3);
-    opacity: 0.3;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0%, 80%, 100% { transform: scale(0.3); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
 }
 
 #inputBox {
@@ -115,19 +106,16 @@ button {
   cursor: pointer;
 }
 
-/* 💥 CODE BLOCK STYLE */
+/* code block */
 pre {
   background: #0d0d0d;
   padding: 12px;
   border-radius: 10px;
-  overflow-x: auto;
-  margin: 10px 0;
   border: 1px solid #222;
+  overflow-x: auto;
 }
-
 code {
   font-family: monospace;
-  font-size: 13px;
   color: #00ff99;
 }
 </style>
@@ -151,7 +139,9 @@ const input = document.getElementById("input");
 let isSending = false;
 let messages = [];
 
-/* UI */
+/* -------------------------
+   MESSAGE ADD
+--------------------------*/
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -160,7 +150,9 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* typing */
+/* -------------------------
+   TYPING ANIMATION
+--------------------------*/
 function showTyping() {
   const div = document.createElement("div");
   div.className = "msg bot typing";
@@ -168,9 +160,7 @@ function showTyping() {
 
   div.innerHTML = `
     <span>Dfuze AI is thinking</span>
-    <span class="dots">
-      <span></span><span></span><span></span>
-    </span>
+    <span class="dots"><span></span><span></span><span></span></span>
   `;
 
   chat.appendChild(div);
@@ -182,102 +172,154 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* 🚀 FIXED CHATGPT-STYLE RENDER ENGINE */
-function formatAIText(text) {
+/* -------------------------
+   SMART MARKDOWN PARSER (NO REGEX ENGINE STYLE)
+--------------------------*/
+function parseMarkdown(text) {
+  const container = document.createElement("div");
 
-  let t = text;
+  const lines = text.split("\n");
+  let inCode = false;
+  let codeBlock = "";
 
-  // 🎯 ANSWER-FIRST SYSTEM
-  let answerBlock = "";
-
-  const match = t.match(/(answer\s*is|answer:|it is|the correct answer is)\s*(.*?)(\.|\n|$)/i);
-
-  if (match) {
-    const answer = match[2].trim();
-    answerBlock = `
-      <div style="
-        font-size:16px;
-        font-weight:700;
-        margin:10px 0;
-        padding:8px;
-        border-left:3px solid #22c55e;
-      ">
-        🎯 Answer: ${answer}
-      </div>
-    `;
+  function flushCode() {
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    code.textContent = codeBlock;
+    pre.appendChild(code);
+    container.appendChild(pre);
+    codeBlock = "";
   }
 
-  // 💥 CODE BLOCKS
-  t = t.replace(/```([\s\S]*?)```/g, (match, code) => {
-    return `<pre><code>${code}</code></pre>`;
-  });
+  lines.forEach(line => {
 
-  // 🧠 HEADINGS
-  t = t.replace(/^### (.*$)/gm, "<h3 style='margin:8px 0;'>$1</h3>");
-  t = t.replace(/^## (.*$)/gm, "<h2 style='margin:10px 0;'>$1</h2>");
-  t = t.replace(/^# (.*$)/gm, "<h1 style='margin:12px 0;'>$1</h1>");
+    // CODE BLOCK START/END
+    if (line.startsWith("```")) {
+      if (!inCode) {
+        inCode = true;
+      } else {
+        inCode = false;
+        flushCode();
+      }
+      return;
+    }
 
-  // ✨ BOLD / ITALIC
-  t = t.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
-  t = t.replace(/\*(.*?)\*/g, "<i>$1</i>");
+    if (inCode) {
+      codeBlock += line + "\n";
+      return;
+    }
 
-  // 📌 LISTS
-  t = t.replace(/^\d+\.\s/gm, "<br>• ");
-  t = t.replace(/^\-\s/gm, "<br>• ");
+    // HEADINGS
+    if (line.startsWith("### ")) {
+      const h = document.createElement("h3");
+      h.textContent = line.replace("### ", "");
+      container.appendChild(h);
+      return;
+    }
 
-  // 🧼 SPACING
-  t = t.replace(/\n\s*\n/g, "<br><br>");
-  t = t.replace(/\n/g, "<br>");
+    if (line.startsWith("## ")) {
+      const h = document.createElement("h2");
+      h.textContent = line.replace("## ", "");
+      container.appendChild(h);
+      return;
+    }
 
-  // ✨ SMART EMOJIS (NO SPAM)
-  const emojiMap = [
-    { k: "rocket", e: "🚀" },
-    { k: "engine", e: "⚙️" },
-    { k: "space", e: "🌌" },
-    { k: "science", e: "🔬" },
-    { k: "important", e: "⚡" },
-    { k: "warning", e: "⚠️" },
-    { k: "note", e: "📝" },
-    { k: "tip", e: "💡" }
-  ];
+    if (line.startsWith("# ")) {
+      const h = document.createElement("h1");
+      h.textContent = line.replace("# ", "");
+      container.appendChild(h);
+      return;
+    }
 
-  emojiMap.forEach(item => {
-    const reg = new RegExp(`\\b${item.k}\\b`, "i");
-    if (t.match(reg)) {
-      t = t.replace(reg, `${item.e} ${item.k}`);
+    // LISTS
+    if (/^\d+\./.test(line)) {
+      const p = document.createElement("p");
+      p.textContent = "• " + line.replace(/^\d+\.\s*/, "");
+      container.appendChild(p);
+      return;
+    }
+
+    if (line.startsWith("- ")) {
+      const p = document.createElement("p");
+      p.textContent = "• " + line.replace("- ", "");
+      container.appendChild(p);
+      return;
+    }
+
+    // NORMAL TEXT
+    if (line.trim() === "") {
+      container.appendChild(document.createElement("br"));
+    } else {
+      const p = document.createElement("p");
+      p.textContent = line;
+      container.appendChild(p);
     }
   });
 
-  return answerBlock + t;
+  if (inCode) flushCode();
+
+  return container;
 }
 
-/* ⚡ STREAMING */
+/* -------------------------
+   ANSWER-FIRST DETECTOR
+--------------------------*/
+function extractAnswer(text) {
+  const match = text.match(/(answer is|answer:|final answer is)\s*(.*)/i);
+  if (match) return match[2];
+  return null;
+}
+
+/* -------------------------
+   EMOJI CONTEXT (CONTROLLED)
+--------------------------*/
+function addEmoji(text) {
+  const map = [
+    ["rocket", "🚀"],
+    ["engine", "⚙️"],
+    ["space", "🌌"],
+    ["science", "🔬"],
+    ["important", "⚡"],
+    ["warning", "⚠️"],
+    ["tip", "💡"]
+  ];
+
+  let out = text;
+  map.forEach(([k, e]) => {
+    if (out.toLowerCase().includes(k)) {
+      out = e + " " + out;
+    }
+  });
+
+  return out;
+}
+
+/* -------------------------
+   STREAMING (WORD BY WORD)
+--------------------------*/
 function streamText(text, container) {
   const words = text.split(" ");
   let i = 0;
+  let buffer = "";
 
-  function addChunk() {
-    const chunkSize = 5;
-
+  function step() {
     if (i < words.length) {
-      const chunk = words.slice(i, i + chunkSize).join(" ");
-
-      container.innerHTML += (i === 0 ? "" : " ") + formatAIText(chunk);
-
-      i += chunkSize;
-
+      buffer += words[i] + " ";
+      container.innerHTML = "";
+      container.appendChild(parseMarkdown(addEmoji(buffer)));
+      i++;
       chat.scrollTop = chat.scrollHeight;
 
-      const delay = text.length > 250 ? 20 : 35;
-
-      setTimeout(addChunk, delay);
+      setTimeout(step, 25); // smooth GPT-like speed
     }
   }
 
-  addChunk();
+  step();
 }
 
-/* SEND */
+/* -------------------------
+   SEND MESSAGE
+--------------------------*/
 async function sendMessage() {
   const text = input.value.trim();
   if (!text || isSending) return;
@@ -295,7 +337,6 @@ async function sendMessage() {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-
       body: JSON.stringify({
         message: text,
         history: messages,
@@ -304,7 +345,7 @@ async function sendMessage() {
     });
 
     const data = await res.json();
-    const reply = data?.reply || "No response from AI";
+    const reply = data?.reply || "No response";
 
     hideTyping();
 
@@ -324,7 +365,7 @@ async function sendMessage() {
   isSending = false;
 }
 
-input.addEventListener("keydown", (e) => {
+input.addEventListener("keydown", e => {
   if (e.key === "Enter") {
     e.preventDefault();
     sendMessage();
