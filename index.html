@@ -3,57 +3,79 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dfuze AI</title>
+<title>Dfuze AI Pro Max</title>
 
 <style>
 * {
   box-sizing: border-box;
+  font-family: system-ui, Arial;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, Arial;
   height: 100vh;
   display: flex;
-  background: #0b0f19;
+  background: radial-gradient(circle at top, #0f172a, #05070f);
   color: white;
+  overflow: hidden;
 }
 
-/* 🌟 SIDEBAR */
+/* SIDEBAR */
 #sidebar {
-  width: 260px;
+  width: 280px;
   background: rgba(255,255,255,0.04);
   border-right: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
+}
+
+#topBar {
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 #newChat {
   margin: 10px;
   padding: 10px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  border: none;
-  color: white;
   border-radius: 10px;
+  border: none;
   cursor: pointer;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: white;
   font-weight: bold;
+  transition: 0.2s;
+}
+
+#newChat:hover {
+  transform: scale(1.05);
 }
 
 .chatItem {
+  margin: 6px 10px;
   padding: 10px;
-  margin: 5px 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: rgba(255,255,255,0.05);
   cursor: pointer;
-  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .chatItem:hover {
   background: rgba(255,255,255,0.1);
 }
 
-/* 🌟 MAIN */
+.smallBtn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+}
+
+/* MAIN */
 #main {
   flex: 1;
   display: flex;
@@ -62,18 +84,19 @@ body {
 
 /* HEADER */
 header {
-  padding: 12px;
+  padding: 14px;
   text-align: center;
   font-weight: bold;
-  background: rgba(255,255,255,0.03);
+  letter-spacing: 1px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
 }
 
 /* CHAT */
 #chat {
   flex: 1;
   overflow-y: auto;
-  padding: 15px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
 }
@@ -83,8 +106,9 @@ header {
   padding: 12px 14px;
   margin: 8px;
   border-radius: 14px;
-  white-space: pre-wrap;
   animation: pop 0.15s ease;
+  white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 @keyframes pop {
@@ -94,7 +118,7 @@ header {
 
 .user {
   align-self: flex-end;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
 }
 
 .bot {
@@ -114,26 +138,40 @@ header {
 textarea {
   flex: 1;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   outline: none;
   resize: none;
   background: rgba(0,0,0,0.4);
   color: white;
+  font-size: 14px;
 }
 
-button {
+button.send {
   margin-left: 10px;
   padding: 12px 16px;
+  border-radius: 12px;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: white;
   cursor: pointer;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: white;
 }
 
-button:hover {
-  transform: scale(1.05);
+/* typing */
+.typing {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-left: 10px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {opacity: 0.2;}
+}
+
+/* mobile */
+@media(max-width: 700px){
+  #sidebar {display:none;}
 }
 </style>
 </head>
@@ -142,6 +180,7 @@ button:hover {
 
 <!-- SIDEBAR -->
 <div id="sidebar">
+  <div id="topBar">⚡ DFUZE PRO MAX</div>
   <button id="newChat">+ New Chat</button>
   <div id="chatList"></div>
 </div>
@@ -149,86 +188,119 @@ button:hover {
 <!-- MAIN -->
 <div id="main">
 
-<header>⚡ DFUZE AI</header>
+<header>🚀 DFUZE AI • PRO MAX MODE</header>
 
 <div id="chat"></div>
 
 <div id="inputBox">
-  <textarea id="input" rows="1" placeholder="Ask something..."></textarea>
-  <button onclick="sendMessage()">Send</button>
+  <textarea id="input" rows="1" placeholder="Message Dfuze AI..."></textarea>
+  <button class="send" onclick="sendMessage()">Send</button>
 </div>
 
 </div>
 
 <script>
-let currentChat = [];
 let chats = JSON.parse(localStorage.getItem("chats") || "[]");
+let current = [];
 
 const chat = document.getElementById("chat");
-const input = document.getElementById("input");
 const chatList = document.getElementById("chatList");
-
-function renderChats() {
-  chatList.innerHTML = "";
-  chats.forEach((c, i) => {
-    const div = document.createElement("div");
-    div.className = "chatItem";
-    div.textContent = "Chat " + (i + 1);
-    div.onclick = () => loadChat(i);
-    chatList.appendChild(div);
-  });
-}
-
-function loadChat(i) {
-  currentChat = chats[i];
-  chat.innerHTML = "";
-  currentChat.forEach(m => addMsg(m.text, m.type, false));
-}
-
-function newChat() {
-  currentChat = [];
-  chat.innerHTML = "";
-  chats.push(currentChat);
-  save();
-  renderChats();
-}
+const input = document.getElementById("input");
 
 function save() {
   localStorage.setItem("chats", JSON.stringify(chats));
 }
 
-function addMsg(text, type, saveMsg = true) {
+function renderSidebar(){
+  chatList.innerHTML = "";
+
+  chats.forEach((c,i)=>{
+    const div = document.createElement("div");
+    div.className = "chatItem";
+
+    div.innerHTML = `
+      <span>Chat ${i+1}</span>
+      <button class="smallBtn" onclick="deleteChat(${i})">✖</button>
+    `;
+
+    div.onclick = () => loadChat(i);
+    chatList.appendChild(div);
+  });
+}
+
+function newChat(){
+  current = [];
+  chats.push(current);
+  chat.innerHTML = "";
+  save();
+  renderSidebar();
+}
+
+function loadChat(i){
+  current = chats[i];
+  chat.innerHTML = "";
+  current.forEach(m => addMsg(m.text, m.type, false));
+}
+
+function deleteChat(i){
+  chats.splice(i,1);
+  save();
+  renderSidebar();
+  chat.innerHTML = "";
+}
+
+function addMsg(text, type, saveMsg=true){
   const div = document.createElement("div");
   div.className = "msg " + type;
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 
-  if (saveMsg) {
-    currentChat.push({ text, type });
+  if(saveMsg){
+    current.push({text, type});
     save();
   }
 }
 
-async function sendMessage() {
+/* fake streaming typing effect */
+function addTyping(){
+  const div = document.createElement("div");
+  div.className = "typing";
+  div.id = "typing";
+  div.textContent = "Dfuze AI is thinking...";
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping(){
+  const t = document.getElementById("typing");
+  if(t) t.remove();
+}
+
+async function sendMessage(){
   const text = input.value.trim();
-  if (!text) return;
+  if(!text) return;
 
-  addMsg(text, "user");
-  input.value = "";
+  addMsg(text,"user");
+  input.value="";
 
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ message: text, user: "guest" })
+  addTyping();
+
+  const res = await fetch("/api/chat",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({message:text,user:"guest"})
   });
 
   const data = await res.json();
-  addMsg(data.reply, "bot");
+
+  removeTyping();
+  addMsg(data.reply,"bot");
 }
 
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
+/* ENTER FIX */
+input.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter" && !e.shiftKey){
     e.preventDefault();
     sendMessage();
   }
@@ -236,8 +308,8 @@ input.addEventListener("keydown", (e) => {
 
 document.getElementById("newChat").onclick = newChat;
 
-renderChats();
 newChat();
+renderSidebar();
 </script>
 
 </body>
