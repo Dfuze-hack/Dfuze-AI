@@ -115,7 +115,7 @@ button {
   cursor: pointer;
 }
 
-/* 💥 CODE BLOCK STYLE (UNCHANGED) */
+/* 💥 CODE BLOCK STYLE */
 pre {
   background: #0d0d0d;
   padding: 12px;
@@ -187,6 +187,26 @@ function formatAIText(text) {
 
   let t = text;
 
+  // 🎯 ANSWER-FIRST SYSTEM
+  let answerBlock = "";
+
+  const match = t.match(/(answer\s*is|answer:|it is|the correct answer is)\s*(.*?)(\.|\n|$)/i);
+
+  if (match) {
+    const answer = match[2].trim();
+    answerBlock = `
+      <div style="
+        font-size:16px;
+        font-weight:700;
+        margin:10px 0;
+        padding:8px;
+        border-left:3px solid #22c55e;
+      ">
+        🎯 Answer: ${answer}
+      </div>
+    `;
+  }
+
   // 💥 CODE BLOCKS
   t = t.replace(/```([\s\S]*?)```/g, (match, code) => {
     return `<pre><code>${code}</code></pre>`;
@@ -209,7 +229,7 @@ function formatAIText(text) {
   t = t.replace(/\n\s*\n/g, "<br><br>");
   t = t.replace(/\n/g, "<br>");
 
-  // ✨ SMART EMOJIS (NO SPAM VERSION)
+  // ✨ SMART EMOJIS (NO SPAM)
   const emojiMap = [
     { k: "rocket", e: "🚀" },
     { k: "engine", e: "⚙️" },
@@ -221,13 +241,14 @@ function formatAIText(text) {
     { k: "tip", e: "💡" }
   ];
 
-  // ONLY ONCE PER MATCH LINE (FIX FOR SPAM)
   emojiMap.forEach(item => {
-    const reg = new RegExp(`(^|\\s)${item.k}`, "i");
-    t = t.replace(reg, `$1${item.e} ${item.k}`);
+    const reg = new RegExp(`\\b${item.k}\\b`, "i");
+    if (t.match(reg)) {
+      t = t.replace(reg, `${item.e} ${item.k}`);
+    }
   });
 
-  return t;
+  return answerBlock + t;
 }
 
 /* ⚡ STREAMING */
