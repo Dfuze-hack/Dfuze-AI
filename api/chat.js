@@ -22,35 +22,20 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
 
+          /* 🔥 IMPORTANT FIX: USE FULL CHAT HISTORY */
           messages: [
-            {
-              role: "system",
-              content:
-                "You are Dfuze AI, a helpful voice assistant. Keep responses short, natural, and easy to speak aloud. Avoid long paragraphs. Be conversational like a real assistant."
-            },
-            ...(history || []),
+            ...(history || []), 
             { role: "user", content: message }
-          ],
-
-          temperature: 0.7,
-          max_tokens: 500
+          ]
         })
       }
     );
 
     const aiData = await aiRes.json();
 
-    let reply =
+    const reply =
       aiData?.choices?.[0]?.message?.content ||
       "No response from AI";
-
-    /* 🧼 CLEAN TEXT FOR VOICE (IMPORTANT FOR ELEVENLABS) */
-    reply = reply
-      .replace(/\*\*/g, "")
-      .replace(/###/g, "")
-      .replace(/##/g, "")
-      .replace(/#/g, "")
-      .trim();
 
     return res.status(200).json({ reply });
 
