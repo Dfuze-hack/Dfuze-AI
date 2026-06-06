@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       headers: {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://your-site.vercel.app", // optional but recommended
+        "HTTP-Referer": "https://your-site.vercel.app",
         "X-Title": "Dfuze AI"
       },
       body: JSON.stringify({
@@ -24,10 +24,18 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    const reply = data.choices?.[0]?.message?.content;
+    // 🔥 IMPORTANT FIX (prevents undefined)
+    const reply =
+      data?.choices?.[0]?.message?.content ||
+      data?.error?.message ||
+      "No response from AI";
 
-    res.status(200).json({ reply });
+    return res.status(200).json({ reply });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      reply: "Server error",
+      error: err.message
+    });
   }
 }
