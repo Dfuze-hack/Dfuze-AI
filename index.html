@@ -151,7 +151,7 @@ function addMsg(text, type) {
 }
 
 /* -------------------------
-   TYPING ANIMATION
+   TYPING
 --------------------------*/
 function showTyping() {
   const div = document.createElement("div");
@@ -173,120 +173,62 @@ function hideTyping() {
 }
 
 /* -------------------------
-   SMART MARKDOWN PARSER (NO REGEX ENGINE STYLE)
+   SMART MARKDOWN ENGINE (FIXED PRO VERSION)
 --------------------------*/
 function parseMarkdown(text) {
   const container = document.createElement("div");
 
-  const lines = text.split("\n");
-  let inCode = false;
-  let codeBlock = "";
+  let html = text;
 
-  function flushCode() {
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
-    code.textContent = codeBlock;
-    pre.appendChild(code);
-    container.appendChild(pre);
-    codeBlock = "";
-  }
-
-  lines.forEach(line => {
-
-    // CODE BLOCK START/END
-    if (line.startsWith("```")) {
-      if (!inCode) {
-        inCode = true;
-      } else {
-        inCode = false;
-        flushCode();
-      }
-      return;
-    }
-
-    if (inCode) {
-      codeBlock += line + "\n";
-      return;
-    }
-
-    // HEADINGS
-    if (line.startsWith("### ")) {
-      const h = document.createElement("h3");
-      h.textContent = line.replace("### ", "");
-      container.appendChild(h);
-      return;
-    }
-
-    if (line.startsWith("## ")) {
-      const h = document.createElement("h2");
-      h.textContent = line.replace("## ", "");
-      container.appendChild(h);
-      return;
-    }
-
-    if (line.startsWith("# ")) {
-      const h = document.createElement("h1");
-      h.textContent = line.replace("# ", "");
-      container.appendChild(h);
-      return;
-    }
-
-    // LISTS
-    if (/^\d+\./.test(line)) {
-      const p = document.createElement("p");
-      p.textContent = "• " + line.replace(/^\d+\.\s*/, "");
-      container.appendChild(p);
-      return;
-    }
-
-    if (line.startsWith("- ")) {
-      const p = document.createElement("p");
-      p.textContent = "• " + line.replace("- ", "");
-      container.appendChild(p);
-      return;
-    }
-
-    // NORMAL TEXT
-    if (line.trim() === "") {
-      container.appendChild(document.createElement("br"));
-    } else {
-      const p = document.createElement("p");
-      p.textContent = line;
-      container.appendChild(p);
-    }
+  // CODE BLOCKS
+  html = html.replace(/```([\s\S]*?)```/g, (m, code) => {
+    return `<pre><code>${code}</code></pre>`;
   });
 
-  if (inCode) flushCode();
+  // HEADINGS
+  html = html.replace(/^### (.*$)/gm, "<h3>$1</h3>");
+  html = html.replace(/^## (.*$)/gm, "<h2>$1</h2>");
+  html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
 
+  // BOLD / ITALIC
+  html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+  html = html.replace(/\*(.*?)\*/g, "<i>$1</i>");
+
+  // LISTS
+  html = html.replace(/^\d+\.\s/gm, "• ");
+  html = html.replace(/^\-\s/gm, "• ");
+
+  // PARAGRAPHS (CHATGPT STYLE)
+  html = html.replace(/\n\s*\n/g, "</p><p>");
+  html = "<p>" + html.replace(/\n/g, "<br>") + "</p>";
+
+  container.innerHTML = html;
   return container;
 }
 
 /* -------------------------
-   ANSWER-FIRST DETECTOR
---------------------------*/
-function extractAnswer(text) {
-  const match = text.match(/(answer is|answer:|final answer is)\s*(.*)/i);
-  if (match) return match[2];
-  return null;
-}
-
-/* -------------------------
-   EMOJI CONTEXT (CONTROLLED)
+   SMART EMOJIS (CONTROLLED, NO SPAM)
 --------------------------*/
 function addEmoji(text) {
   const map = [
-    ["rocket", "🚀"],
-    ["engine", "⚙️"],
+    ["weather", "🌦️"],
+    ["temperature", "🌡️"],
+    ["wind", "💨"],
+    ["rain", "🌧️"],
+    ["storm", "⛈️"],
+    ["snow", "❄️"],
+    ["sun", "☀️"],
     ["space", "🌌"],
+    ["rocket", "🚀"],
     ["science", "🔬"],
     ["important", "⚡"],
-    ["warning", "⚠️"],
     ["tip", "💡"]
   ];
 
   let out = text;
   map.forEach(([k, e]) => {
-    if (out.toLowerCase().includes(k)) {
+    const reg = new RegExp(`\\b${k}\\b`, "i");
+    if (reg.test(out)) {
       out = e + " " + out;
     }
   });
@@ -295,7 +237,7 @@ function addEmoji(text) {
 }
 
 /* -------------------------
-   STREAMING (WORD BY WORD)
+   STREAMING (CHATGPT STYLE)
 --------------------------*/
 function streamText(text, container) {
   const words = text.split(" ");
@@ -310,7 +252,7 @@ function streamText(text, container) {
       i++;
       chat.scrollTop = chat.scrollHeight;
 
-      setTimeout(step, 25); // smooth GPT-like speed
+      setTimeout(step, 22);
     }
   }
 
