@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 🔥 UPDATED GROQ MODEL (FIX)
+    // 🚀 UPDATED GROQ MODEL (VERSATILE)
     const aiRes = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -27,9 +27,16 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${process.env.DfuzeAI}`
         },
         body: JSON.stringify({
-          model: "llama-3.1-8b-instant", // ✅ FIXED MODEL
+          model: "llama-3.3-70b-versatile", // ✅ NEW MODEL
           messages: [
-            { role: "user", content: message }
+            {
+              role: "system",
+              content: "You are a helpful AI assistant named Dfuze AI."
+            },
+            {
+              role: "user",
+              content: message
+            }
           ],
           temperature: 0.7
         })
@@ -45,7 +52,7 @@ export default async function handler(req, res) {
       aiData?.error?.message ||
       "No response from AI";
 
-    // 💾 Save to Supabase (safe)
+    // 💾 Save chat safely
     try {
       await supabase.from("messages").insert([
         {
@@ -59,8 +66,8 @@ export default async function handler(req, res) {
           content: reply
         }
       ]);
-    } catch (e) {
-      console.log("DB error:", e.message);
+    } catch (dbErr) {
+      console.log("DB ERROR:", dbErr.message);
     }
 
     return res.status(200).json({ reply });
