@@ -115,7 +115,7 @@ button {
   cursor: pointer;
 }
 
-/* 💥 CODE BLOCK STYLE (NEW) */
+/* 💥 CODE BLOCK STYLE (UNCHANGED) */
 pre {
   background: #0d0d0d;
   padding: 12px;
@@ -182,7 +182,7 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* 🚀 CHATGPT MARKDOWN ENGINE v1 */
+/* 🚀 FIXED CHATGPT-STYLE RENDER ENGINE */
 function formatAIText(text) {
 
   let t = text;
@@ -205,9 +205,27 @@ function formatAIText(text) {
   t = t.replace(/^\d+\.\s/gm, "<br>• ");
   t = t.replace(/^\-\s/gm, "<br>• ");
 
-  // 🧼 SMART PARAGRAPH SPACING (IMPORTANT)
+  // 🧼 SPACING
   t = t.replace(/\n\s*\n/g, "<br><br>");
   t = t.replace(/\n/g, "<br>");
+
+  // ✨ SMART EMOJIS (NO SPAM VERSION)
+  const emojiMap = [
+    { k: "rocket", e: "🚀" },
+    { k: "engine", e: "⚙️" },
+    { k: "space", e: "🌌" },
+    { k: "science", e: "🔬" },
+    { k: "important", e: "⚡" },
+    { k: "warning", e: "⚠️" },
+    { k: "note", e: "📝" },
+    { k: "tip", e: "💡" }
+  ];
+
+  // ONLY ONCE PER MATCH LINE (FIX FOR SPAM)
+  emojiMap.forEach(item => {
+    const reg = new RegExp(`(^|\\s)${item.k}`, "i");
+    t = t.replace(reg, `$1${item.e} ${item.k}`);
+  });
 
   return t;
 }
