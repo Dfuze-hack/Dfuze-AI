@@ -74,6 +74,12 @@
     button:disabled {
       background: gray;
     }
+
+    /* 🔥 typing indicator style */
+    .typing {
+      opacity: 0.7;
+      font-style: italic;
+    }
   </style>
 </head>
 
@@ -92,6 +98,9 @@
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
+let isSending = false;
+
+/* normal message */
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -100,24 +109,79 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+/* typing indicator */
+function showTyping() {
+  const div = document.createElement("div");
+  div.className = "msg bot typing";
+  div.id = "typing";
+  div.textContent = "Dfuze AI is typing...";
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById("typing");
+  if (t) t.remove();
+}
+
+/* 🔥 WORD BY WORD STREAM */
+function streamText(text, container) {
+  const words = text.split(" ");
+  let i = 0;
+
+  function addWord() {
+    if (i < words.length) {
+      container.textContent += (i === 0 ? "" : " ") + words[i];
+      i++;
+      chat.scrollTop = chat.scrollHeight;
+      setTimeout(addWord, 80); // speed (lower = faster)
+    }
+  }
+
+  addWord();
+}
+
+/* MAIN SEND */
 async function sendMessage() {
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || isSending) return;
+
+  isSending = true;
 
   addMsg(text, "user");
   input.value = "";
 
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, user: "guest" })
-  });
+  showTyping();
 
-  const data = await res.json();
-  addMsg(data.reply, "bot");
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, user: "guest" })
+    });
+
+    const data = await res.json();
+    const reply = data?.reply || "No response from AI";
+
+    hideTyping();
+
+    // create empty bot bubble
+    const div = document.createElement("div");
+    div.className = "msg bot";
+    chat.appendChild(div);
+
+    // 🔥 streaming effect
+    streamText(reply, div);
+
+  } catch (err) {
+    hideTyping();
+    addMsg("Error connecting to AI ❌", "bot");
+  }
+
+  isSending = false;
 }
 
-// 🔥 ENTER KEY FIX
+/* ENTER KEY FIX */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
@@ -125,7 +189,7 @@ input.addEventListener("keydown", (e) => {
   }
 });
 
-// OPTIONAL: load history (if you created history API)
+/* history loader (your existing feature kept) */
 window.onload = async () => {
   try {
     const res = await fetch("/api/history?user=guest");
