@@ -16,7 +16,7 @@ body {
   height: 100vh;
 }
 
-/* ✅ UPDATED HEADER STYLE */
+/* HEADER */
 header {
   padding: 14px;
   background: linear-gradient(90deg, #111, #1a1a1a);
@@ -30,10 +30,14 @@ header {
   border-bottom: 1px solid #222;
 }
 
+/* FIXED LOGO STYLE */
 header img {
   height: 30px;
   width: 30px;
-  border-radius: 8px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: transparent;
+  filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
 }
 
 #chat {
@@ -156,7 +160,10 @@ code {
 <body>
 
 <header>
-  <img src="https://i.postimg.cc/PJ14qMfS/Chat-GPT-Image-Jun-6-2026-04-12-39-PM.png" alt="logo">
+  <img 
+    src="https://i.postimg.cc/PJ14qMfS/Chat-GPT-Image-Jun-6-2026-04-12-39-PM.png" 
+    alt="logo"
+  >
   🤖 Dfuze AI
 </header>
 
