@@ -198,118 +198,64 @@ button.send {
 </div>
 
 </div>
-
 <script>
-let chats = JSON.parse(localStorage.getItem("chats") || "[]");
-let current = [];
-
 const chat = document.getElementById("chat");
-const chatList = document.getElementById("chatList");
 const input = document.getElementById("input");
 
-function save() {
-  localStorage.setItem("chats", JSON.stringify(chats));
-}
+let isSending = false;
 
-function renderSidebar(){
-  chatList.innerHTML = "";
-
-  chats.forEach((c,i)=>{
-    const div = document.createElement("div");
-    div.className = "chatItem";
-
-    div.innerHTML = `
-      <span>Chat ${i+1}</span>
-      <button class="smallBtn" onclick="deleteChat(${i})">✖</button>
-    `;
-
-    div.onclick = () => loadChat(i);
-    chatList.appendChild(div);
-  });
-}
-
-function newChat(){
-  current = [];
-  chats.push(current);
-  chat.innerHTML = "";
-  save();
-  renderSidebar();
-}
-
-function loadChat(i){
-  current = chats[i];
-  chat.innerHTML = "";
-  current.forEach(m => addMsg(m.text, m.type, false));
-}
-
-function deleteChat(i){
-  chats.splice(i,1);
-  save();
-  renderSidebar();
-  chat.innerHTML = "";
-}
-
-function addMsg(text, type, saveMsg=true){
+function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-
-  if(saveMsg){
-    current.push({text, type});
-    save();
-  }
 }
 
-/* fake streaming typing effect */
-function addTyping(){
-  const div = document.createElement("div");
-  div.className = "typing";
-  div.id = "typing";
-  div.textContent = "Dfuze AI is thinking...";
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function removeTyping(){
-  const t = document.getElementById("typing");
-  if(t) t.remove();
-}
-
-async function sendMessage(){
+async function sendMessage() {
   const text = input.value.trim();
-  if(!text) return;
 
-  addMsg(text,"user");
-  input.value="";
+  if (!text || isSending) return;
 
-  addTyping();
+  isSending = true;
 
-  const res = await fetch("/api/chat",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({message:text,user:"guest"})
-  });
+  // ✅ show user message
+  addMsg(text, "user");
 
-  const data = await res.json();
+  // ✅ clear input IMMEDIATELY (fix stuck text bug)
+  input.value = "";
 
-  removeTyping();
-  addMsg(data.reply,"bot");
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        user: "guest"
+      })
+    });
+
+    const data = await res.json();
+
+    // ❗ safety check
+    const reply = data?.reply || "No response from AI";
+
+    addMsg(reply, "bot");
+
+  } catch (err) {
+    addMsg("Error connecting to AI ❌", "bot");
+  }
+
+  isSending = false;
 }
 
-/* ENTER FIX */
-input.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter" && !e.shiftKey){
+/* 🔥 FIXED ENTER HANDLER (NO DUPLICATES) */
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
-
-document.getElementById("newChat").onclick = newChat;
-
-newChat();
-renderSidebar();
 </script>
 
 </body>
