@@ -40,7 +40,7 @@ header {
   border-radius: 12px;
   max-width: 75%;
   white-space: pre-wrap;
-  line-height: 1.4;
+  line-height: 1.6;
   font-size: 14px;
 }
 
@@ -54,7 +54,7 @@ header {
   margin-right: auto;
 }
 
-/* ✨ UPDATED TYPING STYLE */
+/* typing */
 .typing {
   display: flex;
   align-items: center;
@@ -138,11 +138,9 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
 let isSending = false;
-
-/* 🧠 SESSION MEMORY */
 let messages = [];
 
-/* add message UI */
+/* UI */
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
@@ -151,7 +149,7 @@ function addMsg(text, type) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ✨ SHOW TYPING */
+/* typing */
 function showTyping() {
   const div = document.createElement("div");
   div.className = "msg bot typing";
@@ -173,34 +171,56 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* ⚡ FIX: FORMAT AI TEXT (NEW ADDITION) */
+/* 🚀 GLOBAL FORMAT ENGINE (NEW UPGRADE) */
 function formatAIText(text) {
-  return text
-    // big headings (**text**)
-    .replace(/\*\*(.*?)\*\*/g, "<b style='font-size:16px; display:block; margin:6px 0;'>$1</b>")
 
-    // small bold (*text*)
-    .replace(/\*(.*?)\*/g, "<b>$1</b>")
+  let t = text;
 
-    // emoji enhancement for keywords
-    .replace(/(^|\s)(note|important|warning|tip)/gi, (m) => {
-      const map = {
-        note: "📝 Note",
-        important: "⚡ Important",
-        warning: "⚠️ Warning",
-        tip: "💡 Tip"
-      };
-      return map[m.toLowerCase().trim()] || m;
-    });
+  // 🧠 FIX HEADINGS
+  t = t.replace(
+    /\*\*(.*?)\*\*/g,
+    "<div style='font-size:18px;font-weight:700;margin:10px 0;'>$1</div>"
+  );
+
+  // ✨ SMALL BOLD
+  t = t.replace(/\*(.*?)\*/g, "<b>$1</b>");
+
+  // 📌 FIX NUMBERED LISTS
+  t = t.replace(/(\d+)\.\s/g, "<br><b>$1.</b> ");
+
+  // ⚡ SMART EMOJIS (GLOBAL)
+  const emojiMap = [
+    { k: "rocket", e: "🚀" },
+    { k: "space", e: "🌌" },
+    { k: "engine", e: "⚙️" },
+    { k: "fuel", e: "⛽" },
+    { k: "science", e: "🔬" },
+    { k: "important", e: "⚡" },
+    { k: "warning", e: "⚠️" },
+    { k: "note", e: "📝" },
+    { k: "tip", e: "💡" },
+    { k: "launch", e: "🛰️" },
+    { k: "system", e: "🧠" }
+  ];
+
+  emojiMap.forEach(item => {
+    const reg = new RegExp(item.k, "gi");
+    t = t.replace(reg, `${item.e} ${item.k}`);
+  });
+
+  // 🧼 CLEAN BREAKS
+  t = t.replace(/\n/g, "<br>");
+
+  return t;
 }
 
-/* ⚡ FAST STREAMING (UPDATED ONLY FORMAT PART) */
+/* ⚡ STREAMING */
 function streamText(text, container) {
   const words = text.split(" ");
   let i = 0;
 
   function addChunk() {
-    const chunkSize = 4;
+    const chunkSize = 5;
 
     if (i < words.length) {
       const chunk = words.slice(i, i + chunkSize).join(" ");
@@ -211,7 +231,7 @@ function streamText(text, container) {
 
       chat.scrollTop = chat.scrollHeight;
 
-      const delay = text.length > 200 ? 25 : 40;
+      const delay = text.length > 250 ? 20 : 35;
 
       setTimeout(addChunk, delay);
     }
@@ -220,7 +240,7 @@ function streamText(text, container) {
   addChunk();
 }
 
-/* SEND MESSAGE */
+/* SEND */
 async function sendMessage() {
   const text = input.value.trim();
   if (!text || isSending) return;
@@ -267,7 +287,6 @@ async function sendMessage() {
   isSending = false;
 }
 
-/* ENTER KEY */
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
