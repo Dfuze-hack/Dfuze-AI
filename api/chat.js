@@ -1,5 +1,10 @@
+export const config = {
+  runtime: "nodejs",
+};
+
 import { createClient } from "@supabase/supabase-js";
 
+// 🧠 Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
@@ -11,15 +16,35 @@ export default async function handler(req, res) {
   }
 
   const { message, user } = req.body;
+  const userId = user || "guest";
 
-  console.log("ENV CHECK:", {
-    supabase: !!process.env.SUPABASE_URL,
-    key: !!process.env.SUPABASE_KEY,
-    groq: !!process.env.DfuzeAI,
-  });
+  if (!message) {
+    return res.status(400).json({ reply: "No message received" });
+  }
 
   try {
-    // 🧠 test Groq request first (no Supabase yet)
+    // 🟢 Save user message
+    await supabase.from("messages").insert([
+      {
+        user_id: userId,
+        role: "user",
+        content: message,
+      },
+    ]);
+
+    // 🟢 Get chat history
+    const { data: history } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+
+    const formattedMessages = (history || []).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // 🤖 Call Groq AI
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -30,32 +55,43 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
-          messages: [
-            { role: "user", content: message }
-          ],
+          messages: formattedMessages,
+          temperature: 0.7,
         }),
       }
     );
 
     const data = await response.json();
 
-    console.log("🔥 GROQ RAW RESPONSE:", JSON.stringify(data, null, 2));
+    console.log("GROQ RESPONSE:", JSON.stringify(data, null, 2));
 
-    if (!response.ok || data.error) {
+    // 🔴 Handle Groq errors cleanly
+    if (data.error) {
       return res.status(200).json({
-        reply: "GROQ ERROR: " + (data.error?.message || "Unknown error"),
+        reply: "AI Error: " + data.error.message,
       });
     }
 
-    const reply = data?.choices?.[0]?.message?.content;
+    const reply =
+      data?.choices?.[0]?.message?.content ||
+      "No response from AI";
+
+    // 🟢 Save AI response
+    await supabase.from("messages").insert([
+      {
+        user_id: userId,
+        role: "assistant",
+        content: reply,
+      },
+    ]);
 
     return res.status(200).json({ reply });
 
   } catch (err) {
-    console.log("SERVER CRASH:", err);
+    console.log("SERVER ERROR:", err);
 
     return res.status(500).json({
-      reply: "SERVER ERROR: " + err.message,
+      reply: "Server error: " + err.message,
     });
   }
 }
