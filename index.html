@@ -173,32 +173,27 @@ function hideTyping() {
 }
 
 /* -------------------------
-   SMART MARKDOWN ENGINE (FIXED PRO VERSION)
+   SMART MARKDOWN ENGINE
 --------------------------*/
 function parseMarkdown(text) {
   const container = document.createElement("div");
 
   let html = text;
 
-  // CODE BLOCKS
   html = html.replace(/```([\s\S]*?)```/g, (m, code) => {
     return `<pre><code>${code}</code></pre>`;
   });
 
-  // HEADINGS
   html = html.replace(/^### (.*$)/gm, "<h3>$1</h3>");
   html = html.replace(/^## (.*$)/gm, "<h2>$1</h2>");
   html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
 
-  // BOLD / ITALIC
   html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
   html = html.replace(/\*(.*?)\*/g, "<i>$1</i>");
 
-  // LISTS
   html = html.replace(/^\d+\.\s/gm, "• ");
   html = html.replace(/^\-\s/gm, "• ");
 
-  // PARAGRAPHS (CHATGPT STYLE)
   html = html.replace(/\n\s*\n/g, "</p><p>");
   html = "<p>" + html.replace(/\n/g, "<br>") + "</p>";
 
@@ -207,7 +202,7 @@ function parseMarkdown(text) {
 }
 
 /* -------------------------
-   SMART EMOJIS (CONTROLLED, NO SPAM)
+   🔥 FIXED EMOJI ENGINE (1 PER SENTENCE ONLY)
 --------------------------*/
 function addEmoji(text) {
   const map = [
@@ -225,19 +220,25 @@ function addEmoji(text) {
     ["tip", "💡"]
   ];
 
-  let out = text;
-  map.forEach(([k, e]) => {
-    const reg = new RegExp(`\\b${k}\\b`, "i");
-    if (reg.test(out)) {
-      out = e + " " + out;
+  const sentences = text.split(/(?<=[.!?])\s+/);
+
+  const processed = sentences.map(sentence => {
+    const lower = sentence.toLowerCase();
+
+    for (let [k, e] of map) {
+      if (lower.includes(k)) {
+        return e + " " + sentence; // ONLY ONE emoji per sentence
+      }
     }
+
+    return sentence;
   });
 
-  return out;
+  return processed.join(" ");
 }
 
 /* -------------------------
-   STREAMING (CHATGPT STYLE)
+   STREAMING
 --------------------------*/
 function streamText(text, container) {
   const words = text.split(" ");
