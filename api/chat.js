@@ -4,7 +4,7 @@ export const config = {
 
 import { createClient } from "@supabase/supabase-js";
 
-// 🧠 Supabase client
+// 🧠 Supabase setup
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
@@ -39,10 +39,19 @@ export default async function handler(req, res) {
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
-    const formattedMessages = (history || []).map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    // 🚨 FIX: NEVER allow empty messages array
+    const formattedMessages =
+      history && history.length > 0
+        ? history.map((m) => ({
+            role: m.role,
+            content: m.content,
+          }))
+        : [
+            {
+              role: "user",
+              content: message,
+            },
+          ];
 
     // 🤖 Call Groq AI
     const response = await fetch(
@@ -65,7 +74,7 @@ export default async function handler(req, res) {
 
     console.log("GROQ RESPONSE:", JSON.stringify(data, null, 2));
 
-    // 🔴 Handle Groq errors cleanly
+    // 🔴 Handle Groq errors safely
     if (data.error) {
       return res.status(200).json({
         reply: "AI Error: " + data.error.message,
