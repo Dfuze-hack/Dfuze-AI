@@ -98,8 +98,14 @@ button {
   cursor: pointer;
 }
 
+/* 🎤 MIC STATES */
 .mic {
-  background: #444;
+  background: #38bdf8; /* ON default sky blue */
+  transition: 0.3s;
+}
+
+.mic.off {
+  background: #ef4444; /* red OFF */
 }
 
 .mic.active {
@@ -120,13 +126,14 @@ button {
 
 <div id="inputBox">
   <input id="input" placeholder="Type your message..." />
-  <button class="mic" onclick="toggleMic()">🎤</button>
+  <button class="mic off" onclick="toggleMic()">🎤</button>
   <button onclick="sendMessage()">Send</button>
 </div>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const micBtn = document.querySelector(".mic");
 
 let messages = [];
 let voiceEnabled = true;
@@ -135,7 +142,6 @@ let isListening = false;
 
 /* 🔁 LOOP MODE */
 let voiceLoop = false;
-let lastActivity = Date.now();
 let loopTimer;
 
 /* MESSAGE */
@@ -163,7 +169,9 @@ async function speak(text) {
   const audio = new Audio(url);
 
   audio.onended = () => {
-    if (voiceLoop) startMic(); // 🔁 auto continue conversation
+    if (voiceLoop) {
+      setTimeout(() => startMic(), 500);
+    }
   };
 
   audio.play();
@@ -174,13 +182,11 @@ async function sendMessage(textOverride = null) {
   const text = textOverride || input.value.trim();
   if (!text) return;
 
-  lastActivity = Date.now();
-
   addMsg(text, "user");
   messages.push({ role: "user", content: text });
   input.value = "";
 
-  input.classList.remove("glow");
+  resetTimeout();
 
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -195,46 +201,46 @@ async function sendMessage(textOverride = null) {
   messages.push({ role: "assistant", content: reply });
 
   speak(reply);
-
-  resetTimeout();
 }
 
-/* 🎤 START MIC */
+/* 🎤 MIC */
 function startMic() {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) return;
 
-  recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.interimResults = false;
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
 
-  recognition.onresult = (event) => {
-    const text = event.results[0][0].transcript;
-    sendMessage(text);
-  };
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      sendMessage(text);
+    };
 
-  recognition.onend = () => {
-    isListening = false;
-    if (voiceLoop) setTimeout(startMic, 800);
-  };
+    recognition.onend = () => {
+      isListening = false;
+      if (voiceLoop) setTimeout(startMic, 700);
+    };
+  }
 
   recognition.start();
   isListening = true;
 }
 
-/* 🔁 TOGGLE LOOP */
+/* 🔁 TOGGLE MIC LOOP */
 function toggleMic() {
   voiceLoop = !voiceLoop;
 
-  const btn = document.querySelector(".mic");
-  btn.classList.toggle("active");
-
   if (voiceLoop) {
+    micBtn.classList.remove("off");
+    micBtn.classList.add("active");
     startMic();
     resetTimeout();
   } else {
+    micBtn.classList.remove("active");
+    micBtn.classList.add("off");
     if (recognition) recognition.stop();
     clearTimeout(loopTimer);
   }
@@ -246,10 +252,9 @@ function resetTimeout() {
 
   loopTimer = setTimeout(() => {
     voiceLoop = false;
-    document.querySelector(".mic").classList.remove("active");
-
+    micBtn.classList.remove("active");
+    micBtn.classList.add("off");
     if (recognition) recognition.stop();
-
   }, 10 * 60 * 1000);
 }
 
@@ -258,7 +263,7 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* GLOW FIX */
+/* GLOW */
 input.addEventListener("input", () => {
   if (input.value.trim().length > 0) input.classList.add("glow");
   else input.classList.remove("glow");
