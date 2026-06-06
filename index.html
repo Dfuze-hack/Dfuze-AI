@@ -114,6 +114,22 @@ button {
   color: white;
   cursor: pointer;
 }
+
+/* 💥 CODE BLOCK STYLE (NEW) */
+pre {
+  background: #0d0d0d;
+  padding: 12px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid #222;
+}
+
+code {
+  font-family: monospace;
+  font-size: 13px;
+  color: #00ff99;
+}
 </style>
 </head>
 
@@ -166,47 +182,31 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-/* 🚀 FULL CHATGPT-STYLE MARKDOWN ENGINE */
+/* 🚀 CHATGPT MARKDOWN ENGINE v1 */
 function formatAIText(text) {
 
   let t = text;
 
-  // 🧠 HEADINGS (# ## ### style)
+  // 💥 CODE BLOCKS
+  t = t.replace(/```([\s\S]*?)```/g, (match, code) => {
+    return `<pre><code>${code}</code></pre>`;
+  });
+
+  // 🧠 HEADINGS
   t = t.replace(/^### (.*$)/gm, "<h3 style='margin:8px 0;'>$1</h3>");
   t = t.replace(/^## (.*$)/gm, "<h2 style='margin:10px 0;'>$1</h2>");
   t = t.replace(/^# (.*$)/gm, "<h1 style='margin:12px 0;'>$1</h1>");
 
-  // ✨ BOLD + ITALIC
+  // ✨ BOLD / ITALIC
   t = t.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
   t = t.replace(/\*(.*?)\*/g, "<i>$1</i>");
 
-  // 📌 LISTS FIX
+  // 📌 LISTS
   t = t.replace(/^\d+\.\s/gm, "<br>• ");
   t = t.replace(/^\-\s/gm, "<br>• ");
 
-  // ⚡ EMOJIS (SMART CONTEXT SYSTEM)
-  const emojiMap = [
-    { k: "rocket", e: "🚀" },
-    { k: "space", e: "🌌" },
-    { k: "engine", e: "⚙️" },
-    { k: "fuel", e: "⛽" },
-    { k: "science", e: "🔬" },
-    { k: "important", e: "⚡" },
-    { k: "warning", e: "⚠️" },
-    { k: "note", e: "📝" },
-    { k: "tip", e: "💡" },
-    { k: "launch", e: "🛰️" },
-    { k: "system", e: "🧠" },
-    { k: "energy", e: "🔋" },
-    { k: "power", e: "⚡" }
-  ];
-
-  emojiMap.forEach(item => {
-    const reg = new RegExp(item.k, "gi");
-    t = t.replace(reg, `${item.e} ${item.k}`);
-  });
-
-  // 🧼 LINE BREAKS
+  // 🧼 SMART PARAGRAPH SPACING (IMPORTANT)
+  t = t.replace(/\n\s*\n/g, "<br><br>");
   t = t.replace(/\n/g, "<br>");
 
   return t;
