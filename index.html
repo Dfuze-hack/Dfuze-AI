@@ -1,8 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Chat</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f0f0f;
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CHAT AREA */
+  #chat {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* MESSAGE STYLE */
+  .msg {
+    padding: 10px 14px;
+    border-radius: 12px;
+    max-width: 70%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .user {
+    background: #2b7cff;
+    align-self: flex-end;
+  }
+
+  .bot {
+    background: #333;
+    align-self: flex-start;
+  }
+
+  /* INPUT AREA */
+  #inputBox {
+    display: flex;
+    padding: 10px;
+    background: #1a1a1a;
+  }
+
+  #input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  button {
+    margin-left: 10px;
+    padding: 10px 15px;
+    border: none;
+    background: #2b7cff;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #1f6fe0;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="chat"></div>
+
+<div id="inputBox">
+  <input id="input" placeholder="Type a message..." />
+  <button onclick="sendMsg()">Send</button>
+</div>
+
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
-let messages = []; // session-only memory
+let messages = []; // session memory only
 
 function addMsg(text, type) {
   const div = document.createElement("div");
@@ -13,7 +100,7 @@ function addMsg(text, type) {
   return div;
 }
 
-/* ✨ Word-by-word typing */
+/* ✨ typing animation */
 function typeBotMessage(text) {
   const div = document.createElement("div");
   div.className = "msg bot";
@@ -22,31 +109,31 @@ function typeBotMessage(text) {
   const words = text.split(" ");
   let i = 0;
 
-  function typeWord() {
+  function type() {
     if (i < words.length) {
       div.textContent += (i === 0 ? "" : " ") + words[i];
       i++;
       chat.scrollTop = chat.scrollHeight;
-      setTimeout(typeWord, 100);
+      setTimeout(type, 80);
     }
   }
 
-  typeWord();
+  type();
 }
 
-/* 🤖 REAL bot logic (replace later with API if you want) */
-function getBotReply(userText) {
-  const text = userText.toLowerCase();
+/* 🤖 simple bot logic */
+function getBotReply(text) {
+  const t = text.toLowerCase();
 
-  if (text.includes("hi") || text.includes("hello")) {
-    return "Hey! 👋 How can I help you today?";
+  if (t.includes("hello") || t.includes("hi")) {
+    return "Hey 👋 how are you?";
   }
 
-  if (text.includes("how are you")) {
-    return "I'm doing great 😄 What about you?";
+  if (t.includes("how are you")) {
+    return "I'm good 😄 what about you?";
   }
 
-  return "I don't fully understand that yet 🤔 but I'm learning!";
+  return "Got it 👍 tell me more!";
 }
 
 function sendMsg() {
@@ -65,10 +152,13 @@ function sendMsg() {
   typeBotMessage(reply);
 }
 
-/* ✅ ENTER KEY SUPPORT */
-input.addEventListener("keydown", function (e) {
+/* ✅ ENTER key support */
+input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     sendMsg();
   }
 });
 </script>
+
+</body>
+</html>
