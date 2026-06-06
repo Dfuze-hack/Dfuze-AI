@@ -34,7 +34,7 @@ header img {
   border-radius: 10px;
 }
 
-/* 🌈 RAINBOW KEYBOARD GLOW (UNCHANGED CSS) */
+/* 🌈 RAINBOW KEYBOARD GLOW */
 #input {
   flex: 1;
   max-width: 650px;
@@ -101,6 +101,11 @@ button {
 .mic {
   background: #444;
 }
+
+.mic.active {
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+}
 </style>
 </head>
 
@@ -128,6 +133,11 @@ let voiceEnabled = true;
 let recognition;
 let isListening = false;
 
+/* 🔁 LOOP MODE */
+let voiceLoop = false;
+let lastActivity = Date.now();
+let loopTimer;
+
 /* MESSAGE */
 function addMsg(text, type) {
   const div = document.createElement("div");
@@ -151,19 +161,25 @@ async function speak(text) {
   const url = URL.createObjectURL(blob);
 
   const audio = new Audio(url);
+
+  audio.onended = () => {
+    if (voiceLoop) startMic(); // 🔁 auto continue conversation
+  };
+
   audio.play();
 }
 
 /* CHAT */
-async function sendMessage() {
-  const text = input.value.trim();
+async function sendMessage(textOverride = null) {
+  const text = textOverride || input.value.trim();
   if (!text) return;
+
+  lastActivity = Date.now();
 
   addMsg(text, "user");
   messages.push({ role: "user", content: text });
   input.value = "";
 
-  // ❌ FIX: remove glow when sending
   input.classList.remove("glow");
 
   const res = await fetch("/api/chat", {
@@ -179,52 +195,73 @@ async function sendMessage() {
   messages.push({ role: "assistant", content: reply });
 
   speak(reply);
+
+  resetTimeout();
 }
 
-/* 🎤 MIC */
-function toggleMic() {
+/* 🎤 START MIC */
+function startMic() {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    alert("Mic not supported ❌");
-    return;
-  }
+  if (!SpeechRecognition) return;
 
-  if (!recognition) {
-    recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
 
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      input.value = text;
-      input.dispatchEvent(new Event("input")); // 🔥 triggers glow fix
-    };
-  }
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    sendMessage(text);
+  };
 
-  if (!isListening) {
-    recognition.start();
-    isListening = true;
-  } else {
-    recognition.stop();
+  recognition.onend = () => {
     isListening = false;
+    if (voiceLoop) setTimeout(startMic, 800);
+  };
+
+  recognition.start();
+  isListening = true;
+}
+
+/* 🔁 TOGGLE LOOP */
+function toggleMic() {
+  voiceLoop = !voiceLoop;
+
+  const btn = document.querySelector(".mic");
+  btn.classList.toggle("active");
+
+  if (voiceLoop) {
+    startMic();
+    resetTimeout();
+  } else {
+    if (recognition) recognition.stop();
+    clearTimeout(loopTimer);
   }
 }
 
-/* 🌈 FIXED GLOW LOGIC */
-input.addEventListener("input", () => {
-  if (input.value.trim().length > 0) {
-    input.classList.add("glow");
-  } else {
-    input.classList.remove("glow");
-  }
-});
+/* ⏱ 10 MIN AUTO STOP */
+function resetTimeout() {
+  clearTimeout(loopTimer);
+
+  loopTimer = setTimeout(() => {
+    voiceLoop = false;
+    document.querySelector(".mic").classList.remove("active");
+
+    if (recognition) recognition.stop();
+
+  }, 10 * 60 * 1000);
+}
 
 /* ENTER KEY */
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
+  if (e.key === "Enter") sendMessage();
+});
+
+/* GLOW FIX */
+input.addEventListener("input", () => {
+  if (input.value.trim().length > 0) input.classList.add("glow");
+  else input.classList.remove("glow");
 });
 </script>
 
