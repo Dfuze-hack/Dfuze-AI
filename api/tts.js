@@ -16,11 +16,11 @@ export default async function handler(req, res) {
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
         method: "POST",
-        headers: {
-          "xi-api-key": process.env.DFUZEAI, // your key name
-          "Content-Type": "application/json",
-          "Accept": "audio/mpeg"
-        },
+     headers: {
+  "xi-api-key": process.env.ELEVENLABS_API_KEY,
+  "Content-Type": "application/json",
+  "Accept": "audio/mpeg"
+},
         body: JSON.stringify({
           text: text,
           model_id: "eleven_multilingual_v2",
