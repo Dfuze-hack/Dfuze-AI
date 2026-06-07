@@ -154,7 +154,16 @@ addMsg(text, "user");
 messages.push({ role: "user", content: text });
 
 input.value = "";
-input.className = "";
+input.classList.remove("glow");
+
+/* FORCE GLOW RESET */
+input.style.boxShadow = "none";
+input.style.animation = "none";
+
+setTimeout(() => {
+input.style.boxShadow = "";
+input.style.animation = "";
+}, 10);
 
 const res = await fetch("/api/chat", {
 method: "POST",
@@ -236,12 +245,15 @@ input.addEventListener("keydown", (e) => {
 
 /* GLOW */
 input.addEventListener("input", () => {
-if (input.value.trim() !== "") {
-input.className = "glow";
+if (input.value.trim().length > 0) {
+input.classList.add("glow");
 } else {
-input.className = "";
+input.classList.remove("glow");
+input.style.boxShadow = "none";
+input.style.animation = "none";
 }
 });
+
 
 </script>
 
