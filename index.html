@@ -191,6 +191,11 @@ code {
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const inputBox = document.getElementById("inputBox");
+  const micBtn = document.querySelector(".mic");
+
+let recognition;
+let voiceLoop = false;
+let loopTimer;
 
 let isSending = false;
 let messages = [];
