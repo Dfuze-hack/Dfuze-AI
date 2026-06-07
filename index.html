@@ -240,14 +240,14 @@ function hideTyping() {
   const t = document.getElementById("typing");
   if (t) t.remove();
 }
-  function handleReply(reply) {
- handleReply(reply);
+ function handleReply(reply) {
+  hideTyping();
+  addMsg(reply, "bot");
 
-  if (voiceLoop) {
+  if (voiceLoop && reply) {
     speak(reply);
   }
 }
-
 function parseMarkdown(text) {
   const container = document.createElement("div");
 
