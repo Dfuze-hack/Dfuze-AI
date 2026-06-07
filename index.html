@@ -387,12 +387,7 @@ input.addEventListener("keydown", (e) => {
 
 function toggleMic() {
   voiceLoop = !voiceLoop;
-  
-console.log("voiceLoop before speak =", voiceLoop);
 
-if (voiceLoop === true) {
-  speak(reply);
-}
   if (voiceLoop) {
     micBtn.classList.add("active");
     micBtn.classList.remove("off");
