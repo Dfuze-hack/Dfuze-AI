@@ -150,20 +150,14 @@ async function sendMessage(textOverride = null) {
 const text = textOverride || input.value.trim();
 if (!text) return;
 
+input.classList.add("glow");
+
 addMsg(text, "user");
 messages.push({ role: "user", content: text });
 
 input.value = "";
-input.classList.remove("glow");
 
-/* FORCE GLOW RESET */
-input.style.boxShadow = "none";
-input.style.animation = "none";
-
-setTimeout(() => {
-input.style.boxShadow = "";
-input.style.animation = "";
-}, 10);
+try {
 
 const res = await fetch("/api/chat", {
 method: "POST",
@@ -178,8 +172,24 @@ addMsg(reply, "bot");
 messages.push({ role: "assistant", content: reply });
 
 speak(reply);
-}
 
+} catch (err) {
+console.error(err);
+addMsg("Error getting response.", "bot");
+} finally {
+
+input.classList.remove("glow");
+
+input.style.boxShadow = "none";
+input.style.animation = "none";
+
+setTimeout(() => {
+input.style.boxShadow = "";
+input.style.animation = "";
+}, 10);
+
+}
+}
 
 /* TTS */
 async function speak(text) {
@@ -243,14 +253,34 @@ input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-/* GLOW */
-input.addEventListener("input", () => {
-if (input.value.trim().length > 0) {
-input.classList.add("glow");
-} else {
-input.classList.remove("glow");
-input.style.boxShadow = "none";
-input.style.animation = "none";
+/* glow */
+#inputBox.glow input {
+  box-shadow: 0 0 8px #ff0000,
+              0 0 15px #ff8800,
+              0 0 25px #ffff00,
+              0 0 35px #00ff00,
+              0 0 45px #00ffff,
+              0 0 55px #0000ff,
+              0 0 65px #ff00ff;
+  animation: rainbowGlow 2s linear infinite;
+}
+
+@keyframes rainbowGlow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+pre {
+  background: #0d0d0d;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #222;
+  overflow-x: auto;
+}
+
+code {
+  font-family: monospace;
+  color: #00ff99;
 }
 });
 
