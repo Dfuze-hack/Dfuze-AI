@@ -3,16 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
 <title>Dfuze AI</title>
-
-<!-- 🌐 PWA MANIFEST -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f0f0f">
-
-<!-- ICONS -->
-<link rel="icon" href="logo192.png">
-<link rel="apple-touch-icon" href="logo512.png">
 
 <style>
 body {
@@ -25,6 +16,7 @@ body {
   height: 100vh;
 }
 
+/* HEADER */
 header {
   padding: 14px;
   background: linear-gradient(90deg, #111, #1a1a1a);
@@ -34,13 +26,19 @@ header {
   gap: 10px;
   font-weight: bold;
   font-size: 18px;
+  letter-spacing: 1px;
   border-bottom: 1px solid #222;
 }
 
+/* FIXED LOGO */
 header img {
   height: 30px;
   width: 30px;
-  border-radius: 8px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: transparent;
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
 }
 
 #chat {
@@ -56,48 +54,70 @@ header img {
   margin: 10px;
   border-radius: 12px;
   max-width: 75%;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
-.user { background: #2563eb; margin-left: auto; }
-.bot { background: #333; margin-right: auto; }
+.user {
+  background: #2563eb;
+  margin-left: auto;
+}
+
+.bot {
+  background: #333;
+  margin-right: auto;
+}
+
+/* typing */
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.dots {
+  display: flex;
+  gap: 4px;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  background: #aaa;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0.3); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
 
 #inputBox {
   display: flex;
   justify-content: center;
   padding: 12px;
   background: #1a1a1a;
-  gap: 8px;
 }
 
-#input {
+input {
   flex: 1;
   max-width: 650px;
-  padding: 14px;
+  padding: 14px 16px;
   border: none;
   border-radius: 999px;
+  outline: none;
   background: #111;
   color: white;
-  outline: none;
-}
-
-#input.glow {
-  box-shadow: 0 0 8px #ff0000,
-              0 0 15px #ff8800,
-              0 0 25px #ffff00,
-              0 0 35px #00ff00,
-              0 0 45px #00ffff,
-              0 0 55px #0000ff,
-              0 0 65px #ff00ff;
-  animation: rainbow 2s linear infinite;
-}
-
-@keyframes rainbow {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
 }
 
 button {
-  padding: 12px 14px;
+  margin-left: 10px;
+  padding: 12px 16px;
   border: none;
   border-radius: 999px;
   background: #22c55e;
@@ -105,154 +125,6 @@ button {
   cursor: pointer;
 }
 
-.mic { background: #38bdf8; }
-.mic.active { box-shadow: 0 0 12px #38bdf8; }
-.mic.off { background: #ef4444; }
-</style>
-</head>
-
-<body>
-
-<header>
-  <img src="logo192.png">
-  Dfuze AI
-</header>
-
-<div id="chat"></div>
-
-<div id="inputBox">
-  <input id="input" placeholder="Type your message..." />
-  <button class="mic" onclick="toggleMic()">🎤</button>
-  <button onclick="sendMessage()">Send</button>
-</div>
-
-<script>
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const micBtn = document.querySelector(".mic");
-
-let messages = [];
-let recognition;
-let voiceLoop = false;
-let loopTimer;
-
-/* MESSAGE */
-function addMsg(text, type) {
-  const div = document.createElement("div");
-  div.className = "msg " + type;
-  div.textContent = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-/* CHAT */
-async function sendMessage(textOverride = null) {
-const text = textOverride || input.value.trim();
-if (!text) return;
-
-input.classList.add("glow");
-
-addMsg(text, "user");
-messages.push({ role: "user", content: text });
-
-input.value = "";
-
-try {
-
-const res = await fetch("/api/chat", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({ message: text, history: messages })
-});
-
-const data = await res.json();
-const reply = data.reply;
-
-addMsg(reply, "bot");
-messages.push({ role: "assistant", content: reply });
-
-speak(reply);
-
-} catch (err) {
-console.error(err);
-addMsg("Error getting response.", "bot");
-} finally {
-
-input.classList.remove("glow");
-
-input.style.boxShadow = "none";
-input.style.animation = "none";
-
-setTimeout(() => {
-input.style.boxShadow = "";
-input.style.animation = "";
-}, 10);
-
-}
-}
-
-/* TTS */
-async function speak(text) {
-  try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-  } catch (e) {
-    console.log("TTS error", e);
-  }
-}
-
-/* MIC */
-function startMic() {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) return;
-
-  if (!recognition) {
-    recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      sendMessage(text);
-    };
-
-    recognition.onend = () => {
-      if (voiceLoop) setTimeout(startMic, 700);
-    };
-  }
-
-  recognition.start();
-}
-
-function toggleMic() {
-  voiceLoop = !voiceLoop;
-
-  if (voiceLoop) {
-    micBtn.classList.add("active");
-    micBtn.classList.remove("off");
-    startMic();
-  } else {
-    micBtn.classList.add("off");
-    micBtn.classList.remove("active");
-    if (recognition) recognition.stop();
-    clearTimeout(loopTimer);
-  }
-}
-
-/* ENTER KEY */
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-  
 /* glow */
 #inputBox.glow input {
   box-shadow: 0 0 8px #ff0000,
@@ -282,17 +154,191 @@ code {
   font-family: monospace;
   color: #00ff99;
 }
-});
+</style>
+</head>
 
-</script>
+<body>
 
-<!-- SERVICE WORKER -->
+<header>
+  <img 
+    src="https://i.postimg.cc/PJ14qMfS/Chat-GPT-Image-Jun-6-2026-04-12-39-PM.png" 
+    alt="logo"
+  >
+  Dfuze AI
+</header>
+
+<div id="chat"></div>
+
+<div id="inputBox">
+  <input id="input" placeholder="Type your message..." />
+  <button onclick="sendMessage()">Send</button>
+</div>
+
 <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("SW Registered"))
-    .catch(console.error);
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const inputBox = document.getElementById("inputBox");
+
+let isSending = false;
+let messages = [];
+
+/* your logic unchanged */
+function updateGlow() {
+  if (input.value.trim().length > 0 && document.activeElement === input) {
+    inputBox.classList.add("glow");
+  } else {
+    inputBox.classList.remove("glow");
+  }
 }
+
+input.addEventListener("input", updateGlow);
+input.addEventListener("focus", updateGlow);
+input.addEventListener("blur", () => inputBox.classList.remove("glow"));
+
+function addMsg(text, type) {
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement("div");
+  div.className = "msg bot typing";
+  div.id = "typing";
+
+  div.innerHTML = `
+    <span>Dfuze AI is thinking</span>
+    <span class="dots"><span></span><span></span><span></span></span>
+  `;
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById("typing");
+  if (t) t.remove();
+}
+
+function parseMarkdown(text) {
+  const container = document.createElement("div");
+
+  let html = text;
+
+  html = html.replace(/```([\s\S]*?)```/g, (m, code) => {
+    return `<pre><code>${code}</code></pre>`;
+  });
+
+  html = html.replace(/^### (.*$)/gm, "<h3>$1</h3>");
+  html = html.replace(/^## (.*$)/gm, "<h2>$1</h2>");
+  html = html.replace(/^# (.*$)/gm, "<h1>$1</h1>");
+
+  html = html.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+  html = html.replace(/\*(.*?)\*\*/g, "<i>$1</i>");
+
+  html = html.replace(/^\d+\.\s/gm, "• ");
+  html = html.replace(/^\-\s/gm, "• ");
+
+  html = html.replace(/\n\s*\n/g, "</p><p>");
+  html = "<p>" + html.replace(/\n/g, "<br>") + "</p>";
+
+  container.innerHTML = html;
+  return container;
+}
+
+function addEmoji(text) {
+  const map = [
+    ["weather", "🌦️"],
+    ["temperature", "🌡️"],
+    ["wind", "💨"],
+    ["rain", "🌧️"],
+    ["storm", "⛈️"],
+    ["snow", "❄️"],
+    ["sun", "☀️"],
+    ["space", "🌌"],
+    ["rocket", "🚀"],
+    ["science", "🔬"],
+    ["important", "⚡"],
+    ["tip", "💡"]
+  ];
+
+  return text;
+}
+
+function streamText(text, container) {
+  const words = text.split(" ");
+  let i = 0;
+  let buffer = "";
+
+  function step() {
+    if (i < words.length) {
+      buffer += words[i] + " ";
+      container.innerHTML = "";
+      container.appendChild(parseMarkdown(buffer));
+      i++;
+      chat.scrollTop = chat.scrollHeight;
+      setTimeout(step, 22);
+    }
+  }
+
+  step();
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text || isSending) return;
+
+  isSending = true;
+
+  messages.push({ role: "user", content: text });
+
+  addMsg(text, "user");
+  input.value = "";
+
+  inputBox.classList.remove("glow");
+
+  showTyping();
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: messages,
+        user: "guest"
+      })
+    });
+
+    const data = await res.json();
+    const reply = data?.reply || "No response";
+
+    hideTyping();
+
+    messages.push({ role: "assistant", content: reply });
+
+    const div = document.createElement("div");
+    div.className = "msg bot";
+    chat.appendChild(div);
+
+    streamText(reply, div);
+
+  } catch (err) {
+    hideTyping();
+    addMsg("Error connecting to AI ❌", "bot");
+  }
+
+  isSending = false;
+}
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 </script>
 
 </body>
