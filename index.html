@@ -126,22 +126,6 @@ button {
   color: white;
   cursor: pointer;
 }
-async function speak(text) {
-  try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-  } catch (e) {
-    console.log("TTS error", e);
-  }
-}
 /* glow */
 #inputBox.glow input {
   box-shadow: 0 0 8px #ff0000,
