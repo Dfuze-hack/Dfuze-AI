@@ -363,6 +363,45 @@ input.addEventListener("keydown", (e) => {
     sendMessage();
   }
 });
+  function startMic() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) return;
+
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event) => {
+      input.value = event.results[0][0].transcript;
+      sendMessage();
+    };
+
+    recognition.onend = () => {
+      if (voiceLoop) setTimeout(startMic, 700);
+    };
+  }
+
+  recognition.start();
+}
+
+function toggleMic() {
+  voiceLoop = !voiceLoop;
+
+  if (voiceLoop) {
+    micBtn.classList.add("active");
+    micBtn.classList.remove("off");
+    startMic();
+  } else {
+    micBtn.classList.add("off");
+    micBtn.classList.remove("active");
+
+    if (recognition) recognition.stop();
+
+    clearTimeout(loopTimer);
+  }
+}
 </script>
 
 </body>
