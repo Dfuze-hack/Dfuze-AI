@@ -388,6 +388,8 @@ input.addEventListener("keydown", (e) => {
 function toggleMic() {
   voiceLoop = !voiceLoop;
 
+  console.log("voiceLoop =", voiceLoop);
+
   if (voiceLoop) {
     micBtn.classList.add("active");
     micBtn.classList.remove("off");
@@ -397,8 +399,6 @@ function toggleMic() {
     micBtn.classList.remove("active");
 
     if (recognition) recognition.stop();
-
-    clearTimeout(loopTimer);
   }
 }
 </script>
