@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const voiceId = "qSeXEcewz7tA0Q0qk9fH"; // your voice ID
+    const voiceId = "PIGsltMj3gFMR34aFDI3";
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
