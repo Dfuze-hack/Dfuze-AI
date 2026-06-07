@@ -236,8 +236,13 @@ input.addEventListener("keydown", (e) => {
 
 /* GLOW */
 input.addEventListener("input", () => {
-  input.classList.toggle("glow", input.value.trim().length > 0);
+if (input.value.trim() !== "") {
+input.className = "glow";
+} else {
+input.className = "";
+}
 });
+
 </script>
 
 <!-- SERVICE WORKER -->
