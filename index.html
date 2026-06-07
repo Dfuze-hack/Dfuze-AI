@@ -211,9 +211,14 @@ function updateGlow() {
 }
 
 input.addEventListener("input", updateGlow);
-input.addEventListener("focus", updateGlow);
-input.addEventListener("blur", () => inputBox.classList.remove("glow"));
 
+input.addEventListener("focus", () => {
+  updateGlow();
+});
+
+input.addEventListener("blur", () => {
+  updateGlow();
+});
 function addMsg(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
