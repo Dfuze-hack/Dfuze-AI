@@ -411,6 +411,24 @@ function toggleMic() {
     if (recognition) recognition.stop();
   }
 }
+  function typeMessage(text) {
+  const msg = document.createElement("div");
+  msg.className = "msg bot";
+  chat.appendChild(msg);
+
+  const words = text.split(" ");
+  let i = 0;
+
+  function addWord() {
+    if (i < words.length) {
+      msg.textContent += (i === 0 ? "" : " ") + words[i];
+      i++;
+      setTimeout(addWord, 70);
+    }
+  }
+
+  addWord();
+  }
 </script>
 
 </body>
