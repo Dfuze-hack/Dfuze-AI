@@ -202,11 +202,10 @@ let messages = [];
 
 /* your logic unchanged */
 function updateGlow() {
-  const shouldGlow =
-    input.value.trim().length > 0 &&
-    document.activeElement === input;
+  const hasText = input.value.trim().length > 0;
+  const isFocused = document.activeElement === input;
 
-  inputBox.classList.toggle("glow", shouldGlow);
+  inputBox.classList.toggle("glow", hasText && isFocused);
 }
   }
 }
