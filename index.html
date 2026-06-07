@@ -241,7 +241,7 @@ function hideTyping() {
   if (t) t.remove();
 }
   function handleReply(reply) {
-  addMsg(reply, "bot");
+ handleReply(reply);
 
   if (voiceLoop) {
     speak(reply);
