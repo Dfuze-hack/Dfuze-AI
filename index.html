@@ -320,12 +320,9 @@ async function sendMessage() {
   isSending = true;
 
   messages.push({ role: "user", content: text });
-
-  addMsg(text, "user");
-  input.value = "";
-
-  inputBox.classList.remove("glow");
-
+addMsg(text, "user");
+input.value = "";
+updateGlow();
   showTyping();
 
   try {
