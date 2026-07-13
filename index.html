@@ -346,18 +346,18 @@ showTyping();
       })
     });
 
-    const data = await res.json();
- const reply = data?.reply || "No response";
-
-if (voiceLoop) {
-  speak(reply);
-}
+  const reply = data?.reply || "No response";
 
 hideTyping();
 
-    messages.push({ role: "assistant", content: reply });
+messages.push({ role: "assistant", content: reply });
 
-    typeMessage(reply);
+typeMessage(reply);
+
+// Only speak when microphone mode is enabled
+if (voiceLoop && typeof speak === "function") {
+    speak(reply);
+}
 
   } catch (err) {
     hideTyping();
